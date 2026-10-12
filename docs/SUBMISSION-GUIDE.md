@@ -6,7 +6,7 @@
 
 ## 第 0 步：把占位符换成你的仓库地址（已由协助方完成 ✅）
 
-仓库地址已替换为 `hhlllkkk/mcctl`（涉及 `web/app.js` 的 `REPO_URL`、`pyproject.toml` 的
+仓库地址已替换为 `hulinkang9527/mcctl`（涉及 `web/app.js` 的 `REPO_URL`、`pyproject.toml` 的
 `Homepage/Repository`、`README.md` 的 `git clone` 地址），验证无残留占位符：
 
 ```bash
