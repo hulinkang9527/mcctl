@@ -44,7 +44,7 @@
 
 ### 方式一：网页 Playground（零安装，30 秒玩到）
 
-直接用浏览器打开 [`web/index.html`](web/index.html)，或把 `web/` 部署到 GitHub Pages：完成麦麦人格测试 → 查看命定套餐 → 下载 / 分享麦籍卡。
+在线玩：[**hulinkang9527.github.io/mcctl**](https://hulinkang9527.github.io/mcctl/)（已部署到 GitHub Pages，手机也能开），或本地打开 [`web/index.html`](web/index.html)：完成麦麦人格测试 → 查看命定套餐 → 下载 / 分享麦籍卡。
 
 ### 方式二：命令行（离线演示，无需 Token）
 
