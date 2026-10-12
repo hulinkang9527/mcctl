@@ -49,7 +49,7 @@
 ### 方式二：命令行（离线演示，无需 Token）
 
 ```bash
-git clone https://github.com/hhlllkkk/mcctl.git
+git clone https://github.com/hulinkang9527/mcctl.git
 cd mcctl
 pip install -e .
 
