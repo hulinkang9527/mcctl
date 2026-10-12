@@ -1,0 +1,21 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+
+# --- 密钥 / 本地配置（绝不提交真实 Token）---
+.env
+*.token
+mcp-config.json
+
+# --- 系统 / 编辑器 ---
+.DS_Store
+.idea/
+.vscode/
