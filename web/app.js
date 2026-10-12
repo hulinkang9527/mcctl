@@ -1,7 +1,7 @@
 /* mcctl Playground — 麦麦人格测试（纯静态，离线可跑；计分逻辑与 src/mcctl/engines/persona.py 一致） */
 
 // ⚠️ 发布前把这里改成你的公开仓库地址（README / 页面 Star 按钮会用到）
-const REPO_URL = "https://github.com/hhlllkkk/mcctl";
+const REPO_URL = "https://github.com/hulinkang9527/mcctl";
 const INSTALL_CMD = "pip install mcctl\nmcctl whoami     # 或一键演示：mcctl demo";
 
 // ---- 命定套餐 code → 展示名 ----
