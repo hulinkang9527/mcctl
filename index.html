@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>mcctl · 麦门的 kubectl — 麦麦人格测试</title>
+  <meta name="description" content="mcctl，麦门的 kubectl。10 道题测出你的麦麦人格（McPersona），领取命定套餐与可分享麦籍卡。基于麦当劳中国官方 MCP 的开源程序员节作品。" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <!-- 顶部导航 -->
+  <header class="nav">
+    <div class="nav__brand">
+      <span class="nav__logo">🍔</span>
+      <span class="nav__name">mcctl</span>
+      <span class="nav__tag">麦门的 kubectl</span>
+    </div>
+    <a class="btn btn--ghost btn--sm" id="navStar" href="#" target="_blank" rel="noopener">☆ Star</a>
+  </header>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="pixel-frame">
+      <pre class="hero__ascii" aria-hidden="true">
+   __  ______________  __
+  /  |/  / ____/_  __/ / /
+ / /|_/ / /     / /   / /__
+/_/  /_/_/     /_/   /____/   M c P e r s o n a
+      </pre>
+    </div>
+    <h1 class="hero__title">麦门的 <span class="hl">kubectl</span></h1>
+    <p class="hero__sub">
+      在终端里用 <code>mcctl whoami</code> 认清你是哪种麦门人。<br />
+      33 个麦当劳官方 MCP 工具，编排成点单、省钱、控卡、积分的一套命令。
+    </p>
+    <div class="hero__cta">
+      <button class="btn btn--primary btn--lg" id="startBtn">▶ 开始麦麦人格测试</button>
+      <a class="btn btn--dark btn--lg" id="heroStar" href="#" target="_blank" rel="noopener">☆ 给项目 Star</a>
+    </div>
+    <div class="hero__chips">
+      <span>🃏 8 型麦麦人格</span><span>🍱 命定套餐</span><span>💸 一键算到手价</span>
+      <span>🛡️ 交易安全护栏</span><span>📦 33 MCP Tools</span><span>🐍 pip 即装</span>
+    </div>
+  </section>
+
+  <!-- 测试区 -->
+  <main class="wrap">
+    <section class="quiz hidden" id="quiz">
+      <div class="quiz__top">
+        <span class="quiz__count" id="qCount">1 / 10</span>
+        <span class="quiz__hint">凭第一直觉二选一</span>
+      </div>
+      <div class="progress"><div class="progress__bar" id="progressBar"></div></div>
+      <h2 class="quiz__q" id="qText">题目加载中…</h2>
+      <div class="quiz__opts">
+        <button class="opt" data-choice="a">
+          <span class="opt__key">A</span><span class="opt__text" id="optA"></span>
+        </button>
+        <button class="opt" data-choice="b">
+          <span class="opt__key">B</span><span class="opt__text" id="optB"></span>
+        </button>
+      </div>
+      <button class="quiz__restart" id="quizRestart">↺ 重新开始</button>
+    </section>
+
+    <!-- 结果区 -->
+    <section class="result hidden" id="result">
+      <div class="result__grid">
+        <div class="cardwrap">
+          <canvas id="cardCanvas" width="1080" height="1350" aria-label="你的麦籍卡"></canvas>
+        </div>
+        <div class="result__panel">
+          <div class="result__badge" id="rCode">CODE</div>
+          <h2 class="result__name" id="rName"></h2>
+          <p class="result__title" id="rTitle"></p>
+          <p class="result__motto" id="rMotto"></p>
+          <div class="result__traits" id="rTraits"></div>
+          <p class="result__desc" id="rDesc"></p>
+
+          <h3 class="result__mealtitle">🎯 你的命定套餐</h3>
+          <ul class="meallist" id="rMeals"></ul>
+
+          <h3 class="result__mealtitle">⌨️ 命定命令</h3>
+          <pre class="codeblock" id="rCmd"></pre>
+
+          <div class="result__actions">
+            <button class="btn btn--primary" id="downloadBtn">⬇️ 下载麦籍卡</button>
+            <button class="btn btn--accent" id="shareBtn">🔗 分享我的人格</button>
+            <button class="btn btn--ghost" id="againBtn">↺ 再测一次</button>
+          </div>
+          <div class="result__star">
+            <a class="btn btn--dark btn--lg btn--block" id="resultStar" href="#" target="_blank" rel="noopener">
+              ☆ 在 GitHub 给 mcctl 点 Star，解锁完整 CLI
+            </a>
+            <pre class="codeblock codeblock--install" id="installBlock"></pre>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 能力速览 -->
+    <section class="features" id="features">
+      <h2 class="sec__title">不只是测试，它是一套真能下单的命令行</h2>
+      <div class="features__grid">
+        <div class="feature"><div class="feature__ic">🃏</div><h3>mcctl whoami</h3><p>8 型麦麦人格测试，生成可分享麦籍卡。</p></div>
+        <div class="feature"><div class="feature__ic">🍱</div><h3>mcctl decide</h3><p>按人格 / 热量 / 蛋白 / 预算 / 忌口 / 人数，组合搜索命定套餐。</p></div>
+        <div class="feature"><div class="feature__ic">💸</div><h3>mcctl save</h3><p>一键领券、逐券试算、凑单与免配送费，给你真实到手价。</p></div>
+        <div class="feature"><div class="feature__ic">🛒</div><h3>mcctl order</h3><p>到店 / 外送下单闭环，默认演练、二次确认，跳转官方支付。</p></div>
+        <div class="feature"><div class="feature__ic">🎁</div><h3>mcctl points</h3><p>积分总览、商城兑换、抽奖（附理性提示）、活动日历、派对预约。</p></div>
+        <div class="feature"><div class="feature__ic">🔌</div><h3>33 MCP Tools</h3><p>官方 MCP 全量工具真实接入；无 Token 也能离线 Mock 完整体验。</p></div>
+      </div>
+      <div class="terminal" aria-label="终端演示">
+        <div class="terminal__bar"><span></span><span></span><span></span><code class="terminal__title">mcctl demo</code></div>
+<pre class="terminal__body">$ mcctl whoami
+🪪 你是：板烧修行者（FITA）— 高蛋白苦行僧
+$ mcctl decide -p FITA
+🥗 板烧鸡腿堡 + 杯装玉米粒 + 鲜煮咖啡
+   525 kcal · 蛋白 30g · 人均 ¥40
+$ mcctl save --cart "巨无霸:1,薯条(中):1,可口可乐(中):1"
+   基线 ¥46.00 → 满40减10 → <span class="term-hl">实付 ¥36.00（省 21.7%）</span></pre>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>
+      <strong>mcctl · 麦门的 kubectl</strong> — 麦当劳程序员创意开发大赛（M-CODE / 1024）开源参赛作品。
+    </p>
+    <p class="footer__small">
+      本项目为非官方创意作品，与麦当劳无隶属关系；页面演示数据为非官方示例，不构成医疗 / 营养建议，
+      餐品、价格与供应以麦当劳官方渠道实时结果为准。基于麦当劳中国官方 MCP（open.mcd.cn/mcp）。
+    </p>
+  </footer>
+
+  <div class="toast hidden" id="toast"></div>
+  <script src="app.js"></script>
+</body>
+</html>

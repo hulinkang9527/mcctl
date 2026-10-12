@@ -1,0 +1,7 @@
+# 核心依赖（安装后即可使用离线演示模式 --mock）
+typer>=0.12
+rich>=13.7
+httpx>=0.27
+
+# 真实接入麦当劳 MCP（推荐安装：pip install -r requirements.txt 或 pip install "mcctl[mcp]"）
+mcp>=1.2
