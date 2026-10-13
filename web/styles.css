@@ -70,7 +70,8 @@ body {
   z-index: 20;
 }
 .nav__brand { display: flex; align-items: baseline; gap: 0.5rem; color: #fff; }
-.nav__logo { font-size: 1.5rem; }
+.nav__logo { font-size: 1.5rem; cursor: pointer; user-select: none; transition: transform 0.1s; }
+.nav__logo:active { transform: scale(1.25) rotate(-8deg); }
 .nav__name { font-size: 1.3rem; font-weight: 800; letter-spacing: 1px; color: var(--mcd-yellow); }
 .nav__tag { font-size: 0.8rem; opacity: 0.9; }
 
@@ -247,4 +248,64 @@ body {
   .result__grid { grid-template-columns: 1fr; }
   .cardwrap { position: static; max-width: 420px; margin: 0 auto; }
   .features__grid { grid-template-columns: 1fr; }
+}
+
+/* ---------- 趣味动效层 ---------- */
+.hero { position: relative; }
+.hero__float { position: absolute; inset: 0; pointer-events: none; overflow: hidden; z-index: 0; }
+.hero__float span { position: absolute; font-size: 2rem; opacity: 0.45; animation: floaty 6s ease-in-out infinite; filter: drop-shadow(2px 2px 0 rgba(28,20,16,0.25)); }
+.hero__float .f1 { left: 5%; top: 14%; animation-delay: 0s; }
+.hero__float .f2 { right: 6%; top: 26%; animation-delay: 1.4s; }
+.hero__float .f3 { left: 9%; bottom: 20%; animation-delay: 2.6s; }
+.hero__float .f4 { right: 11%; bottom: 14%; animation-delay: 3.8s; }
+@keyframes floaty {
+  0%, 100% { transform: translateY(0) rotate(-5deg); }
+  50% { transform: translateY(-16px) rotate(6deg); }
+}
+
+/* 题目翻卡 */
+.quiz__q, .quiz__opts { will-change: transform, opacity; }
+.q-out { animation: qOut 0.18s ease forwards; }
+.q-in { animation: qIn 0.3s cubic-bezier(0.2, 0.9, 0.3, 1.2); }
+.opts-in { animation: optsIn 0.3s cubic-bezier(0.2, 0.9, 0.3, 1.2); }
+@keyframes qOut { to { transform: translateX(-28px); opacity: 0; } }
+@keyframes qIn { from { transform: translateX(28px); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes optsIn { from { transform: translateY(14px); opacity: 0; } to { transform: none; opacity: 1; } }
+
+/* 答题 emoji 粒子 */
+.fx-pop {
+  position: fixed; z-index: 99; pointer-events: none;
+  font-size: 1.5rem; line-height: 1;
+  animation: fxPop 0.85s cubic-bezier(0.1, 0.8, 0.4, 1) forwards;
+}
+@keyframes fxPop {
+  0% { transform: translate(0, 0) rotate(0) scale(0.6); opacity: 1; }
+  100% { transform: translate(var(--dx), var(--dy)) rotate(var(--rot)) scale(1.1); opacity: 0; }
+}
+
+/* 结果面板弹入 + 打字光标 */
+.result__panel.enter { animation: panelIn 0.5s cubic-bezier(0.2, 0.9, 0.3, 1.25); }
+@keyframes panelIn {
+  0% { transform: translateY(34px) scale(0.96); opacity: 0; }
+  100% { transform: none; opacity: 1; }
+}
+.type-caret::after { content: "▌"; color: var(--mcd-red); animation: blink 0.8s steps(1) infinite; }
+@keyframes blink { 50% { opacity: 0; } }
+
+/* logo 彩蛋 · 麦门喷泉 */
+.fx-rain {
+  position: fixed; top: -12vh; z-index: 98; pointer-events: none;
+  font-size: 1.7rem; line-height: 1;
+  animation: fxFall 1.9s ease-in forwards;
+}
+@keyframes fxFall {
+  to { transform: translateY(120vh) rotate(320deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
