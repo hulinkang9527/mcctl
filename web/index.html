@@ -11,7 +11,7 @@
   <!-- 顶部导航 -->
   <header class="nav">
     <div class="nav__brand">
-      <span class="nav__logo">🍔</span>
+      <span class="nav__logo" id="logoEaster" title="戳我 5 次有惊喜">🍔</span>
       <span class="nav__name">mcctl</span>
       <span class="nav__tag">麦门的 kubectl</span>
     </div>
@@ -20,6 +20,9 @@
 
   <!-- HERO -->
   <section class="hero">
+    <div class="hero__float" aria-hidden="true">
+      <span class="f1">🍔</span><span class="f2">🍟</span><span class="f3">🥤</span><span class="f4">🌙</span>
+    </div>
     <div class="pixel-frame">
       <pre class="hero__ascii" aria-hidden="true">
    __  ______________  __
@@ -51,7 +54,7 @@
       </div>
       <div class="progress"><div class="progress__bar" id="progressBar"></div></div>
       <h2 class="quiz__q" id="qText">题目加载中…</h2>
-      <div class="quiz__opts">
+      <div class="quiz__opts" id="quizOpts">
         <button class="opt" data-choice="a">
           <span class="opt__key">A</span><span class="opt__text" id="optA"></span>
         </button>
