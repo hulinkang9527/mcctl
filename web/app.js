@@ -101,14 +101,31 @@ function showQuiz() {
 function renderQuestion() {
   const i = answers.length;
   const item = QUESTIONS[i];
-  $("qCount").textContent = `${i + 1} / ${QUESTIONS.length}`;
-  $("progressBar").style.width = `${(i / QUESTIONS.length) * 100 + 8}%`;
-  $("qText").textContent = `${i + 1}. ${item.q}`;
-  $("optA").textContent = item.a[0];
-  $("optB").textContent = item.b[0];
+  const qEl = $("qText"), optsEl = $("quizOpts");
+  qEl.classList.add("q-out");
+  setTimeout(() => {
+    qEl.classList.remove("q-out");
+    qEl.textContent = `${i + 1}. ${item.q}`;
+    $("optA").textContent = item.a[0];
+    $("optB").textContent = item.b[0];
+    $("qCount").textContent = `${i + 1} / ${QUESTIONS.length}`;
+    $("progressBar").style.width = `${(i / QUESTIONS.length) * 100 + 8}%`;
+    qEl.classList.add("q-in");
+    optsEl.classList.add("opts-in");
+    setTimeout(() => {
+      qEl.classList.remove("q-in");
+      optsEl.classList.remove("opts-in");
+    }, 320);
+  }, 170);
 }
 function choose(choice) {
   const i = answers.length;
+  const btn = document.querySelector(`.opt[data-choice="${choice}"]`);
+  if (btn) {
+    const r = btn.getBoundingClientRect();
+    popFx(r.left + r.width / 2, r.top + r.height / 2,
+      choice === "a" ? ["🍔", "🥤", "🍟"] : ["🌶️", "🍦", "☕"]);
+  }
   answers.push(QUESTIONS[i][choice][1]);
   if (answers.length < QUESTIONS.length) {
     renderQuestion();
@@ -132,7 +149,18 @@ function finish() {
   $("rCode").textContent = p.code;
   $("rName").textContent = `${p.emoji} ${p.name}`;
   $("rTitle").textContent = p.title;
-  $("rMotto").textContent = `“${p.motto}”`;
+  const motto = `“${p.motto}”`;
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    $("rMotto").textContent = motto;
+  } else {
+    $("rMotto").textContent = "";
+    $("rMotto").classList.add("type-caret");
+    let k = 0;
+    const iv = setInterval(() => {
+      $("rMotto").textContent = motto.slice(0, ++k);
+      if (k >= motto.length) { clearInterval(iv); $("rMotto").classList.remove("type-caret"); }
+    }, 42);
+  }
   $("rDesc").textContent = p.desc;
   $("rTraits").innerHTML = p.traits.map((t) => `<span>${t}</span>`).join("");
   $("rMeals").innerHTML = p.meal
@@ -142,8 +170,11 @@ function finish() {
   drawCard(p);
   quizEl.classList.add("hidden");
   resultEl.classList.remove("hidden");
+  const panel = document.querySelector(".result__panel");
+  panel.classList.remove("enter"); void panel.offsetWidth; panel.classList.add("enter");
   resultEl.scrollIntoView({ behavior: "smooth", block: "start" });
   window.__lastPersona = p;
+  toast(`🍟 麦门神谕：${ORACLES[Math.floor(Math.random() * ORACLES.length)]}`);
 }
 
 // ---------- Canvas 麦籍卡 ----------
@@ -283,6 +314,42 @@ function toast(msg) {
   const t = $("toast"); t.textContent = msg; t.classList.remove("hidden");
   clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.add("hidden"), 2400);
 }
+
+// ---------- 趣味反馈 ----------
+const ORACLES = PERSONAS.map((p) => p.motto);
+function popFx(x, y, emojis) {
+  for (let i = 0; i < 6; i++) {
+    const s = document.createElement("span");
+    s.className = "fx-pop";
+    s.textContent = emojis[i % emojis.length];
+    s.style.left = x + "px";
+    s.style.top = y + "px";
+    s.style.setProperty("--dx", (Math.random() * 170 - 85).toFixed(0) + "px");
+    s.style.setProperty("--dy", (Math.random() * -150 - 40).toFixed(0) + "px");
+    s.style.setProperty("--rot", (Math.random() * 140 - 70).toFixed(0) + "deg");
+    document.body.appendChild(s);
+    setTimeout(() => s.remove(), 900);
+  }
+}
+const RAIN_EMOJIS = ["🍔", "🍟", "🥤", "🍦", "🌶️", "☕", "🌙", "🪙"];
+function rainFx() {
+  for (let i = 0; i < 22; i++) {
+    const s = document.createElement("span");
+    s.className = "fx-rain";
+    s.textContent = RAIN_EMOJIS[i % RAIN_EMOJIS.length];
+    s.style.left = (Math.random() * 96).toFixed(1) + "vw";
+    s.style.animationDelay = (Math.random() * 0.7).toFixed(2) + "s";
+    document.body.appendChild(s);
+    setTimeout(() => s.remove(), 2700);
+  }
+}
+let logoClicks = 0, logoTimer;
+$("logoEaster").addEventListener("click", () => {
+  logoClicks++;
+  clearTimeout(logoTimer);
+  logoTimer = setTimeout(() => (logoClicks = 0), 1400);
+  if (logoClicks >= 5) { logoClicks = 0; rainFx(); toast("🎉 麦门万岁！彩蛋已触发"); }
+});
 
 // ---------- 事件 ----------
 $("startBtn").addEventListener("click", showQuiz);
