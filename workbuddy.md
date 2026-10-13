@@ -35,7 +35,7 @@
 
 **我：** 就按这个来。先帮我把 8 型人格和每型的营养偏好权重、本命餐设计出来。
 
-**WorkBuddy：** 输出了 8 型 McPersona（BIGS/FITA/SPCY/SWEET/EARL/NITE/SQUAD/LOYT），每型包含：权重向量（热量倾向、是否高蛋白优先、嗜辣、嗜甜、早餐、性价比/猎奇/社交系数）、本命餐 code、幸运口令、配色与文案，并设计了 10 道 a/b 二选一测试题保证 8 型都可被区分。
+**WorkBuddy：** 输出了 8 型 McPersona（BIGS/FITA/SPCY/SWEET/EARL/NITE/SQUAD/LOYT），每型包含：权重向量（热量倾向、是否高蛋白优先、嗜辣、嗜甜、早餐、性价比/猎奇/社交系数）、本命餐 code、幸运口令、配色与文案，并设计了 6 道 a/b 二选一测试题保证 8 型都可被区分。
 
 ---
 
