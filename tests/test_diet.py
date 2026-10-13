@@ -57,8 +57,9 @@ def test_breakfast_only_serves_breakfast():
 def test_all_personas_produce_valid_combo():
     async def go():
         mcd = _mcd()
+        # 固定 regular 时段：本命餐均为常规菜单（EARL 早餐单独覆盖），避免依赖真实时钟时段
         for code in ["BIGS", "FITA", "SPCY", "SWEET", "NITE", "SQUAD", "LOYT"]:
-            res = await decide(mcd, persona_code=code, people=2 if code == "SQUAD" else 1)
+            res = await decide(mcd, persona_code=code, people=2 if code == "SQUAD" else 1, period="regular")
             best = res["best"]
             assert best is not None, f"{code} 没有产出套餐"
             assert best["cart"], f"{code} 餐篮为空"
