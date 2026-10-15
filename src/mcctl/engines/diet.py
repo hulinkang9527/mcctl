@@ -282,32 +282,37 @@ def optimize_meal(meals: list[Meal], c: MealConstraints, top_k: int = 3) -> list
         return []
     per_budget = (c.budget_total / c.people) if c.budget_total else None
 
-    candidates: list[Plan] = []
-    for main, side, drink, dessert in product(slots["main"], slots["side"], slots["drink"], slots["dessert"]):
+    # 剪枝：人均至少含一份主餐，主餐单价已超出人均预算 12% 上限的组合必不可能达标。
+    # 注意只按预算剪（热量无法只凭主餐判断）；若全部被剪光则回退不剪，交由兜底处理。
+    if per_budget:
+        price_cap = per_budget * 1.12
+        mains = [m for m in slots["main"] if m.price <= price_cap + 1e-6] or slots["main"]
+    else:
+        mains = slots["main"]
+
+    # 笛卡尔积只遍历一次、每个组合只打分一次：分「严格达标」与「接近约束（放宽 12%）」
+    # 两桶，严格达标不足 top_k 时再用接近桶兜底，避免旧实现把全量组合重算一遍。
+    strict: list[Plan] = []
+    near: list[Plan] = []
+    for main, side, drink, dessert in product(mains, slots["side"], slots["drink"], slots["dessert"]):
         template = [x for x in (main, side, drink, dessert) if x is not None]
         lines = _aggregate(template, c, meals)
         per_kcal = sum(l.meal.energy_kcal * l.qty for l in lines) / c.people
         per_price = sum(l.meal.price * l.qty for l in lines) / c.people
-        if c.max_kcal and per_kcal > c.max_kcal + 1e-6:
-            continue
-        if per_budget and per_price > per_budget + 1e-6:
-            continue
-        s, detail, reasons = _score(lines, c)
-        candidates.append(Plan("待定", lines, c.people, s, detail, reasons))
 
-    # 严格过滤后过少则放宽 12% 兜底
-    if len(candidates) < top_k:
-        for main, side, drink, dessert in product(slots["main"], slots["side"], slots["drink"], slots["dessert"]):
-            template = [x for x in (main, side, drink, dessert) if x is not None]
-            lines = _aggregate(template, c, meals)
-            per_kcal = sum(l.meal.energy_kcal * l.qty for l in lines) / c.people
-            per_price = sum(l.meal.price * l.qty for l in lines) / c.people
-            if c.max_kcal and per_kcal > c.max_kcal * 1.12:
-                continue
-            if per_budget and per_price > per_budget * 1.12:
-                continue
+        kcal_ok = (not c.max_kcal) or per_kcal <= c.max_kcal + 1e-6
+        budget_ok = (not per_budget) or per_price <= per_budget + 1e-6
+        kcal_near = (not c.max_kcal) or per_kcal <= c.max_kcal * 1.12
+        budget_near = (not per_budget) or per_price <= per_budget * 1.12
+
+        if kcal_ok and budget_ok:
             s, detail, reasons = _score(lines, c)
-            candidates.append(Plan("待定（接近约束）", lines, c.people, s, detail, reasons))
+            strict.append(Plan("待定", lines, c.people, s, detail, reasons))
+        elif kcal_near and budget_near:
+            s, detail, reasons = _score(lines, c)
+            near.append(Plan("待定（接近约束）", lines, c.people, s, detail, reasons))
+
+    candidates = strict if len(strict) >= top_k else strict + near
 
     # 去重（按餐篮签名）
     uniq: dict[str, Plan] = {}

@@ -104,9 +104,10 @@ async def decide(
     )
     meals = await mcd.meals(period)
     plans = optimize_meal(meals, constraints, top_k=top_k)
-    for p in plans:
+    for i, p in enumerate(plans):
         p.persona_code = persona["code"]
-        _persona_reasons(p, persona)
+        # 仅最优方案带人格口号，次优/第三方案保持简洁
+        _persona_reasons(p, persona, with_head=(i == 0))
 
     return {
         "persona": persona,
@@ -122,7 +123,7 @@ async def decide(
     }
 
 
-def _persona_reasons(plan: Plan, persona: dict[str, Any]) -> None:
-    head = f"{persona['emoji']} {persona['name']}的命定套餐：{persona['motto']}"
-    plan.reasons = [head] + plan.reasons
-    # 次优/第三方案去掉人格口号，保持简洁
+def _persona_reasons(plan: Plan, persona: dict[str, Any], *, with_head: bool = True) -> None:
+    if with_head:
+        head = f"{persona['emoji']} {persona['name']}的命定套餐：{persona['motto']}"
+        plan.reasons = [head] + plan.reasons

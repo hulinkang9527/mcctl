@@ -35,9 +35,9 @@ def _fixture() -> tuple[list[PartyStore], dict[str, list[str]], dict[tuple[str, 
     dates = {s1.code: [d1, d2], s2.code: [d1], s3.code: [d1, d2]}
     sessions = {
         (s1.code, d1): [
-            _session(101, 4, 10, 88, left=5),   # 命中人数、预算内
-            _session(102, 4, 10, 130, left=5),  # 超预算
-            _session(103, 2, 3, 60, left=5),    # 人数超上限
+            _session(101, 4, 10, 88, left=8),   # 命中人数、预算内、名额可容纳 6 人
+            _session(102, 4, 10, 130, left=8),  # 超预算
+            _session(103, 2, 3, 60, left=5),    # 人数超上限（供 people=3 用例）
         ],
         (s1.code, d2): [
             _session(104, 4, 10, 68, left=0),   # 无名额
@@ -46,10 +46,10 @@ def _fixture() -> tuple[list[PartyStore], dict[str, list[str]], dict[tuple[str, 
             _session(201, 1, 20, 50, left=9),   # 打烊门店被排除
         ],
         (s3.code, d1): [
-            _session(301, 4, 10, 82, left=4),
+            _session(301, 4, 10, 82, left=8),
         ],
         (s3.code, d2): [
-            _session(302, 4, 10, 100, left=2),
+            _session(302, 4, 10, 100, left=2),  # 仍有名额但不足以容纳 6 人，应排除
         ],
     }
     return stores, dates, sessions
@@ -61,12 +61,15 @@ def test_basic_recommendation_returns_sorted_plans():
                        PartyConstraints(people=6, budget=600, date_hint=_d(5)))
     assert plans, "应至少返回一个方案"
     assert all(isinstance(p, PartyPlan) for p in plans)
-    # 打烊门店、超预算、人数不符、无名额的场次都不应出现
+    # 打烊门店、超预算、人数不符、无名额、名额不足以容纳全队的场次都不应出现
     codes = {(p.store.code, p.date, p.session.id) for p in plans}
     assert ("S2", _d(5), 201) not in codes
     assert ("S1", _d(5), 102) not in codes
     assert ("S1", _d(5), 103) not in codes
     assert ("S1", _d(12), 104) not in codes
+    assert ("S3", _d(12), 302) not in codes  # left=2 < 6 人，名额不足
+    # 所有入选场次的剩余名额都必须能容纳全队
+    assert all(p.session.left_num >= 6 for p in plans)
     # 评分降序
     scores = [p.score for p in plans]
     assert scores == sorted(scores, reverse=True)
@@ -92,8 +95,48 @@ def test_no_left_num_excluded():
     stores, dates, sessions = _fixture()
     plans = plan_party(stores, dates, sessions,
                        PartyConstraints(people=6, budget=None))
+    # 剩余名额必须能容纳全部 6 人，而不只是"还有空位（left>0）"
     for p in plans:
-        assert p.session.left_num > 0
+        assert p.session.left_num >= 6
+
+
+def test_insufficient_remaining_seats_excluded():
+    """场次人数范围满足、但剩余名额不足以容纳全队时，必须被硬约束淘汰。"""
+    stores = [_store("S1")]
+    dates = {"S1": [_d(3)]}
+    # 场次允许 4~10 人，但只剩 3 个名额；6 人派对无法预订
+    sessions = {("S1", _d(3)): [_session(1, 4, 10, 80, left=3)]}
+    plans = plan_party(stores, dates, sessions, PartyConstraints(people=6, budget=1000))
+    assert plans == []
+
+
+def test_scarcity_prefers_tighter_seats():
+    """同日期同价时，名额越紧张（越抢手）应越靠前。"""
+    stores = [_store("S1")]
+    d = _d(3)
+    dates = {"S1": [d]}
+    sessions = {("S1", d): [
+        _session(1, 1, 20, 80, left=1),   # 仅剩 1 个名额
+        _session(2, 1, 20, 80, left=8),   # 名额充足
+    ]}
+    plans = plan_party(stores, dates, sessions,
+                       PartyConstraints(people=1, max_plans=2))
+    assert plans[0].session.id == 1
+    assert plans[0].score > plans[1].score
+
+
+def test_cheaper_ranks_first_on_same_date():
+    """同日期、名额都充足时，人均更便宜的方案应排在前面。"""
+    stores = [_store("S1")]
+    d = _d(3)
+    dates = {"S1": [d]}
+    sessions = {("S1", d): [
+        _session(1, 1, 20, 100, left=8),  # 贵
+        _session(2, 1, 20, 60, left=8),   # 便宜
+    ]}
+    plans = plan_party(stores, dates, sessions,
+                       PartyConstraints(people=1, budget=1000, max_plans=2))
+    assert plans[0].session.id == 2
 
 
 def test_distance_limit_filters_stores():

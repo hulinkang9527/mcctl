@@ -9,7 +9,7 @@
 from __future__ import annotations
 
 import json
-from contextlib import asynccontextmanager
+from contextlib import AsyncExitStack, suppress
 from typing import Any
 
 from mcctl.mock_client import McdServer
@@ -33,6 +33,8 @@ class RealMCPClient(McdServer):
         self.token = token
         self.timeout = timeout
         self._tools_cache: list[str] | None = None
+        self._stack: AsyncExitStack | None = None
+        self._session: Any = None
 
     def _headers(self) -> dict[str, str]:
         return {
@@ -40,21 +42,42 @@ class RealMCPClient(McdServer):
             "Accept": "application/json, text/event-stream",
         }
 
-    @asynccontextmanager
-    async def _connect(self):
-        """在同一协程内完成连接的建立与关闭，避免 SDK task group 跨 task 退出。"""
+    async def _get_session(self) -> Any:
+        """懒建立并复用同一个 MCP 会话（HTTP 建连 + initialize 只发生一次）。
+
+        旧实现每次 tools/call 都重新建连并 initialize，派对策划这类需要几十次
+        调用的命令会产生几十次握手；这里在 client 生命周期内复用一个
+        ClientSession，由 :meth:`aclose` 在命令结束时、同一 event loop 内显式关闭。
+        """
+        if self._session is not None:
+            return self._session
         try:
             from mcp import ClientSession
             from mcp.client.streamable_http import streamablehttp_client
         except ImportError as exc:
             raise RuntimeError(NO_SDK_HINT) from exc
 
-        async with streamablehttp_client(
-            self.url, headers=self._headers(), timeout=self.timeout
-        ) as (read, write, _get_sid):
-            async with ClientSession(read, write) as session:
-                await session.initialize()
-                yield session
+        stack = AsyncExitStack()
+        await stack.__aenter__()
+        try:
+            read, write, _get_sid = await stack.enter_async_context(
+                streamablehttp_client(self.url, headers=self._headers(), timeout=self.timeout)
+            )
+            session = await stack.enter_async_context(ClientSession(read, write))
+            await session.initialize()
+        except Exception:
+            await stack.aclose()
+            raise
+        self._stack, self._session = stack, session
+        return session
+
+    async def aclose(self) -> None:
+        """关闭并清理复用的会话（必须在持有它的 event loop 内调用）。"""
+        if self._stack is not None:
+            with suppress(Exception):
+                await self._stack.aclose()
+            self._stack = None
+            self._session = None
 
     @staticmethod
     def _parse(result: Any) -> Any:
@@ -81,10 +104,10 @@ class RealMCPClient(McdServer):
             return {"ok": True, "source": "live", "data": {"text": raw}}
 
     async def health_check(self) -> bool:
-        """探测连通性（auto 模式据此决定是否降级）。"""
+        """探测连通性并建立/复用会话（auto 模式据此决定是否降级）。"""
         try:
-            async with self._connect() as session:
-                await session.list_tools()
+            session = await self._get_session()
+            await session.list_tools()
             return True
         except Exception:
             return False
@@ -93,9 +116,9 @@ class RealMCPClient(McdServer):
         if self._tools_cache is not None:
             return self._tools_cache
         try:
-            async with self._connect() as session:
-                res = await session.list_tools()
-                self._tools_cache = [t.name for t in res.tools]
+            session = await self._get_session()
+            res = await session.list_tools()
+            self._tools_cache = [t.name for t in res.tools]
             return self._tools_cache
         except RuntimeError:
             raise
@@ -104,11 +127,11 @@ class RealMCPClient(McdServer):
 
     async def call_tool(self, name: str, arguments: dict[str, Any] | None = None) -> Any:
         try:
-            async with self._connect() as session:
-                result = await session.call_tool(name, arguments or {})
-                if getattr(result, "isError", False):
-                    return {"ok": False, "error": f"工具 {name} 返回错误", "detail": self._parse(result)}
-                return self._parse(result)
+            session = await self._get_session()
+            result = await session.call_tool(name, arguments or {})
+            if getattr(result, "isError", False):
+                return {"ok": False, "error": f"工具 {name} 返回错误", "detail": self._parse(result)}
+            return self._parse(result)
         except RuntimeError:
             raise
         except Exception as exc:

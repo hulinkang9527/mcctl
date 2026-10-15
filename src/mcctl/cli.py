@@ -26,7 +26,7 @@ from mcctl.engines.decide import decide as engine_decide
 from mcctl.engines.diet import MealConstraints, optimize_meal
 from mcctl.engines.party import PartyConstraints, plan_party
 from mcctl.engines.save import save_flow
-from mcctl.service import McD, get_server
+from mcctl.service import DEFAULT_STORE_ID, McD, aclose_servers, get_server
 
 app = typer.Typer(add_completion=True, help="🍔 mcctl — 麦门控制面（kubectl for McDonald's）",
                   no_args_is_help=False, rich_markup_mode="rich")
@@ -55,8 +55,15 @@ async def _make_mcd(force: Optional[str]) -> tuple[McD, str]:
 
 
 def _run(coro):
+    async def _guarded():
+        try:
+            return await coro
+        finally:
+            # 命令结束（含异常）后，在同一 event loop 内关闭复用的 live MCP 连接
+            await aclose_servers()
+
     try:
-        return asyncio.run(coro)
+        return asyncio.run(_guarded())
     except (ConnectionError, RuntimeError) as exc:
         # 连接 / 鉴权 / 限流类失败：收敛为干净的一行提示，不暴露 SDK 堆栈
         ui.warn(f"✗ {exc}")
@@ -91,7 +98,15 @@ def _parse_cart(text: str, meals) -> list[dict]:
             key, qty = part.rsplit("：", 1)
         else:
             key, qty = part, "1"
-        key, qty = key.strip(), int(qty.strip())
+        key = key.strip()
+        try:
+            qty = int(qty.strip())
+        except ValueError:
+            ui.warn(f"数量非法：{key}:{qty.strip()}（数量应为整数，已忽略该项）")
+            continue
+        if qty <= 0:
+            ui.warn(f"数量需为正整数：{key}:{qty}（已忽略该项）")
+            continue
         m = next((x for x in meals if x.code.upper() == key.upper()), None)
         if not m:
             nk = _norm_name(key)
@@ -267,10 +282,9 @@ def decide_cmd(
         ui.console.print("[dim]当前为离线演示数据；配置 MCP Token 后将基于官方实时菜单与价格计算。[/dim]")
 
 
-@app.command("lunch", hidden=True)
-def lunch_cmd(ctx: typer.Context, **kw):
-    """decide 的口语别名。"""
-    decide_cmd(ctx, **kw)
+# decide 的口语别名：直接复用 decide_cmd 的完整参数签名注册一次，
+# 避免用 **kwargs 转发导致 Typer 推断不出任何选项（lunch -p 会报 no such option）。
+app.command("lunch", hidden=True, help="decide 的口语别名")(decide_cmd)
 
 
 @app.command("diet")
@@ -370,19 +384,21 @@ def save_cmd(
     ctx: typer.Context,
     cart: str = typer.Option("巨无霸:1,薯条(中):1,可口可乐(中):1", "--cart", help="餐篮，如 巨无霸:1,麦乐鸡(10块):1"),
     channel: str = typer.Option("到店取餐", "--channel", help="到店取餐/麦乐送/堂食外带/得来速"),
+    store: Optional[str] = typer.Option(None, "--store", help="门店编码（默认演示门店；真实下单请传所选门店）"),
     do_order: bool = typer.Option(False, "--order", help="省钱后直接进入下单（仍需 --confirm）"),
     confirm: bool = typer.Option(False, "--confirm", help="确认执行真实交易"),
 ):
     """一键领券 → 最优券 → 智能凑单 → 到手价（麦门省钱主教）。"""
     async def go():
         mcd, mode = await _make_mcd(_force_mode(ctx))
+        store_id = store or DEFAULT_STORE_ID
         meals = (await mcd.meals("regular")) + (await mcd.meals("breakfast"))
         parsed = _parse_cart(cart, meals)
-        result = await save_flow(mcd, parsed, channel=channel)
+        result = await save_flow(mcd, parsed, channel=channel, store_id=store_id)
         result["mode"] = mode
         if do_order and _require_confirm(ctx, confirm, f"按省税后餐篮下单（¥{result['final']['total']:.2f}）",
                                          ui.render_price(result["final"], "待下单（演练）")):
-            order = await mcd.create_order(result["final_cart"], channel=channel)
+            order = await mcd.create_order(result["final_cart"], channel=channel, store_id=store_id)
             result["order"] = order
         return result
 
@@ -410,17 +426,19 @@ def order_new(
     ctx: typer.Context,
     cart: str = typer.Option("巨无霸:1,薯条(中):1", "--cart"),
     channel: str = typer.Option("到店取餐", "--channel"),
+    store: Optional[str] = typer.Option(None, "--store", help="门店编码（默认演示门店；真实下单请传所选门店）"),
     use_save: bool = typer.Option(True, "--save/--no-save", help="下单前自动套用最优券"),
     confirm: bool = typer.Option(False, "--confirm", help="确认创建订单（返回官方支付链接）"),
 ):
     """创建订单：默认仅演练，--confirm 才真正调用 create-order。"""
     async def go():
         mcd, mode = await _make_mcd(_force_mode(ctx))
+        store_id = store or DEFAULT_STORE_ID
         meals = (await mcd.meals("regular")) + (await mcd.meals("breakfast"))
         parsed = _parse_cart(cart, meals)
         coupon_ids = []
         if use_save:
-            sv = await save_flow(mcd, parsed, channel=channel)
+            sv = await save_flow(mcd, parsed, channel=channel, store_id=store_id)
             parsed = sv["final_cart"]
             direct_coupon = (sv.get("direct") or {}).get("coupon")
             coupon_ids = [direct_coupon["coupon_id"]] if direct_coupon else []
@@ -428,12 +446,13 @@ def order_new(
                 coupon_ids = [sv["topup"]["coupon"]["coupon_id"]]
             bd = sv["final"]
         else:
-            bd = (await mcd.calc_price(parsed, channel)).to_dict()
+            bd = (await mcd.calc_price(parsed, channel, store_id=store_id)).to_dict()
         preview = ui.render_price(bd, f"待下单·{channel}（演练）")
         do = _require_confirm(ctx, confirm, f"创建{channel}订单 ¥{bd['total']:.2f}", preview)
         order = None
         if do:
-            order = await mcd.create_order(parsed, channel=channel, coupon_ids=coupon_ids)
+            order = await mcd.create_order(parsed, channel=channel, coupon_ids=coupon_ids,
+                                           store_id=store_id)
         return mode, bd, order
     mode, bd, order = _run(go())
     if ctx.obj.json_out:
@@ -476,9 +495,13 @@ def order_list(ctx: typer.Context):
         mcd, _ = await _make_mcd(_force_mode(ctx))
         return await mcd.order_list()
     res = _run(go())
-    ui.print_json(res) if ctx.obj.json_out else (
-        ui.info("暂无历史订单（演示环境）") if not res else
-        [ui.console.print(ui.render_order(o)) for o in res])
+    if ctx.obj.json_out:
+        ui.print_json(res)
+    elif not res:
+        ui.info("暂无历史订单（演示环境）")
+    else:
+        for o in res:
+            ui.console.print(ui.render_order(o))
 
 
 # --------------------------------------------------------------------------- 积分 / 商城 / 抽奖
@@ -623,13 +646,16 @@ def party_plan(
     async def go():
         mcd, _ = await _make_mcd(_force_mode(ctx))
         stores = await mcd.party_stores(city)
-        dates_by_store: dict[str, list[str]] = {}
-        sessions_by_store_date: dict[tuple[str, str], list] = {}
-        for st in stores:
-            ds = await mcd.party_dates(st.code)
-            dates_by_store[st.code] = ds
-            for d in ds:
-                sessions_by_store_date[(st.code, d)] = await mcd.party_sessions(st.code, d)
+        # 并发拉取各门店可约日期，避免逐店串行往返（live 模式下每次都是网络调用）
+        date_lists = await asyncio.gather(*[mcd.party_dates(st.code) for st in stores])
+        dates_by_store = {st.code: ds for st, ds in zip(stores, date_lists)}
+        # 再并发拉取每个 (门店, 日期) 下的场次
+        session_keys = [(st.code, d) for st in stores
+                        for d in dates_by_store.get(st.code, [])]
+        session_lists = await asyncio.gather(*[
+            mcd.party_sessions(code, d) for code, d in session_keys
+        ])
+        sessions_by_store_date = dict(zip(session_keys, session_lists))
         constraints = PartyConstraints(people=people, budget=budget,
                                        date_hint=date_hint or "",
                                        max_distance_km=max_distance, want_weekend=weekend,
@@ -701,7 +727,7 @@ def demo_cmd(ctx: typer.Context):
         out["recommend"] = decision["plans"][0]
         sv = await save_flow(mcd, [
             {"code": "BUR_BIGMAC", "qty": 1}, {"code": "SIDE_FRIES_M", "qty": 1},
-            {"code": "BUR_MANSHAO" if False else "BUR_MALA_CHICKEN", "qty": 1},
+            {"code": "BUR_MALA_CHICKEN", "qty": 1},
             {"code": "DRK_COLA_M", "qty": 2}], channel="麦乐送")
         out["save"] = {"final_total": sv["final"]["total"], "saved": sv["total_saved"], "steps": sv["steps"]}
         out["campaigns"] = [c.to_dict() for c in await mcd.campaigns("ongoing")]

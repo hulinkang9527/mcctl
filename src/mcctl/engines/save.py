@@ -11,6 +11,11 @@ from typing import Any
 from mcctl.models import Coupon, Meal, PriceBreakdown
 from mcctl.service import McD
 
+# 麦乐送商品小计达到该金额可免外送费（业务规则）
+SHIPPING_FREE_THRESHOLD = 39.0
+# 凑单品价格超过该差价时通常不划算，不再推荐凑单
+MAX_TOPUP_GAP = 16.0
+
 
 def _bd_dict(bd: PriceBreakdown) -> dict[str, Any]:
     return bd.to_dict()
@@ -73,18 +78,19 @@ async def save_flow(
     else:
         steps.append("③ 当前购物车暂无可直接使用的满减券")
 
-    # 4) 凑单后用券（含"满39免外送费"门槛）
+    # 4) 凑单后用券（含"满 SHIPPING_FREE_THRESHOLD 免外送费"门槛）
+    delivery_fee = round(base.delivery_fee, 2)
     topup_candidates: list[dict[str, Any]] = []
     thresholds: list[tuple[str, float, Coupon | None]] = []
     for c in coupons:
         if c.kind in ("cash", "discount") and base.subtotal < c.threshold:
             thresholds.append(("coupon", c.threshold, c))
-    if channel == "麦乐送" and base.delivery_fee > 0:
-        thresholds.append(("shipping", 39.0, None))
+    if channel == "麦乐送" and delivery_fee > 0:
+        thresholds.append(("shipping", SHIPPING_FREE_THRESHOLD, None))
 
     for kind, threshold, c in thresholds:
         gap = round(threshold - base.subtotal, 2)
-        if gap <= 0 or gap > 16:  # 凑单超过 16 元通常不划算，不推荐
+        if gap <= 0 or gap > MAX_TOPUP_GAP:  # 差价过大时凑单通常不划算，不推荐
             continue
         add = _cheapest_topup(meals, gap)
         if not add:
@@ -93,18 +99,18 @@ async def save_flow(
         cids = [c.coupon_id] if c else []
         bd2 = await mcd.calc_price(new_cart, channel, cids, store_id)
         extra_cost = round(bd2.total - base.total, 2)
-        gained = (c.amount if c and c.kind == "cash" else 0) + (9.0 if kind == "shipping" else 0)
-        net_gain = round(add.price - extra_cost, 2)  # 多得商品的隐含价值口径
-        # 划算判定：凑单后多花的钱 < 凑单品价格（相当于折扣买下），且实付增量合理
+        net_gain = round(add.price - extra_cost, 2)  # 多得商品的隐含价值（多付的钱低于商品价即划算）
+        # 划算判定：凑单后多花的钱 < 凑单品价格（相当于折扣买下）
         if extra_cost < add.price - 1e-6:
+            benefit = (f"用券减 ¥{c.amount:g}" if c
+                       else f"免 ¥{delivery_fee:g} 外送费")  # 免单收益按真实配送费，不写死
             topup_candidates.append({
                 "kind": kind, "add": add.to_dict(), "coupon": c.to_dict() if c else None,
                 "breakdown": _bd_dict(bd2), "extra_cost": extra_cost,
                 "saved_vs_base": round(base.total - bd2.total, 2),
                 "net_gain": net_gain, "new_cart": new_cart,
                 "reason": (f"再加 ¥{add.price:.0f} 的「{add.name}」跨过 ¥{threshold:g} 门槛，"
-                           + (f"用券减 ¥{c.amount:g}" if c else "免 ¥9 外送费")
-                           + f"，实际仅多付 ¥{extra_cost:.2f}"),
+                           + benefit + f"，实际仅多付 ¥{extra_cost:.2f}"),
             })
     if topup_candidates:
         top = min(topup_candidates, key=lambda x: x["breakdown"]["total"])

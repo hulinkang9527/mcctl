@@ -26,6 +26,10 @@ from mcctl.models import (
 )
 
 
+# 本次进程内成功建立、需要在命令结束时显式关闭的 live 连接
+_active_live: list[RealMCPClient] = []
+
+
 async def get_server(settings: Settings) -> tuple[Any, str]:
     """返回 ``(server, 实际模式说明)``。"""
     if settings.is_mock:
@@ -38,6 +42,8 @@ async def get_server(settings: Settings) -> tuple[Any, str]:
     live = RealMCPClient(settings.url, settings.token or "")
     ok = await live.health_check()
     if ok:
+        # 复用同一条会话：登记后由 aclose_servers() 在命令结束时统一关闭
+        _active_live.append(live)
         return live, "live"
     # auto 模式连不上则降级；live 模式直接抛错
     if settings.mode.value == "live":
@@ -46,6 +52,20 @@ async def get_server(settings: Settings) -> tuple[Any, str]:
             "或使用 --mock 体验离线演示。"
         )
     return MockMCPClient(), "mock-fallback"
+
+
+async def aclose_servers() -> None:
+    """关闭本次命令内复用的 live MCP 连接（幂等；mock 模式为空操作）。"""
+    for client in _active_live:
+        await client.aclose()
+    _active_live.clear()
+
+
+# 离线演示数据使用的样例门店（南京东路）。
+# 真实下单/算价时应由上层传入用户实际选中的门店（如门店查询或派对策划结果），
+# 而不是无论在哪个城市都按这一家门店计价。
+DEFAULT_STORE_ID = "ST_NJDL"
+DEFAULT_STORE_NAME = "麦当劳南京东路步行街餐厅"
 
 
 def _pick(d: dict[str, Any], *keys: str, default: Any = None) -> Any:
@@ -138,7 +158,7 @@ class McD:
         return [parse_meal(r) for r in (rows or [])]
 
     async def meal(self, code: str) -> Meal | None:
-        for m in await self.meals("all" if False else "regular"):
+        for m in await self.meals("regular"):
             if m.code == code:
                 return m
         # 早餐等其他时段再找一遍
@@ -183,7 +203,7 @@ class McD:
         items: list[dict[str, Any]],
         channel: str = "到店取餐",
         coupon_ids: list[str] | None = None,
-        store_id: str = "ST_NJDL",
+        store_id: str = DEFAULT_STORE_ID,
     ) -> PriceBreakdown:
         data = await self.call("calculate-price", store_id=store_id, channel=channel,
                                items=items, coupon_ids=coupon_ids or [])
@@ -197,7 +217,7 @@ class McD:
         )
 
     async def create_order(self, items, channel="到店取餐", coupon_ids=None,
-                          store_id="ST_NJDL", store_name="麦当劳南京东路步行街餐厅") -> dict[str, Any]:
+                          store_id=DEFAULT_STORE_ID, store_name=DEFAULT_STORE_NAME) -> dict[str, Any]:
         return await self.call("create-order", store_id=store_id, store_name=store_name,
                                channel=channel, items=items, coupon_ids=coupon_ids or [])
 

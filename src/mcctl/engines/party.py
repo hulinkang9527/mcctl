@@ -91,21 +91,23 @@ def plan_party(
       1. 门店营业中（business_status）；
       2. 距离在 max_distance_km 内；
       3. 人数落在场次 [party_min, party_max] 内；
-      4. 场次还有剩余名额（left_num > 0）；
+      4. 剩余名额足以容纳全部人数（left_num >= people）；
       5. 估算总价 ≤ budget；
       6. 日期满足 want_weekend（若指定）。
 
     软排序分（越高越靠前）：
-      - 人均成本越低越好（成本分 = 1 / per_person）；
+      - 人均成本越低越好（成本分以候选内最低人均价归一化到 (0,1]，最便宜=1）；
       - 日期越贴近 date_hint 越好（贴近分 = 1 / (1 + 天数差)）；
       - 周末偏好命中 +0.3；
-      - 剩余名额越紧张说明越抢手，轻微加分（0.02 × min(left,5) 封顶 0.1）。
+      - 剩余名额越紧张说明越抢手，名额越少加分越高（left≤2 加 0.1，3~4 加 0.05）。
     """
     if not stores:
         return []
-    plans: list[PartyPlan] = []
+
     today = _date.today().isoformat()
 
+    # —— 阶段一：硬约束筛选，收集全部可行场次（暂不打分，便于成本分全局归一化）——
+    feasible: list[dict[str, Any]] = []
     for store in stores:
         if not store.business_status:
             continue
@@ -119,38 +121,54 @@ def plan_party(
             for s in sessions_by_store_date.get((store.code, d), []):
                 if not (s.party_min <= constraints.people <= s.party_max):
                     continue
-                if s.left_num <= 0:
+                # 名额必须能容纳全部人数，而不只是"还有空位"
+                if s.left_num < constraints.people:
                     continue
                 total = round(s.price * constraints.people, 2)
                 if constraints.budget is not None and total > constraints.budget + 1e-6:
                     continue
+                feasible.append({
+                    "store": store, "date": d, "session": s,
+                    "total": total, "per_person": round(total / constraints.people, 2),
+                })
 
-                per_person = round(total / constraints.people, 2)
-                cost_score = 1.0 / per_person if per_person > 0 else 0.0
-                closeness = 1.0 / (1 + _date_delta(d, constraints.date_hint)) if constraints.date_hint else 0.0
-                weekend_bonus = 0.3 if (constraints.want_weekend is True and _is_weekend(d)) else 0.0
-                scarcity = min(0.02 * min(s.left_num, 5), 0.1)
-                score = cost_score + closeness + weekend_bonus + scarcity
+    if not feasible:
+        return []
 
-                reasons: list[str] = []
-                if constraints.budget is not None:
-                    reasons.append(f"总价 ¥{total:.2f} 在预算 ¥{constraints.budget:.0f} 内")
-                reasons.append(f"人均仅 ¥{per_person:.2f}")
-                if constraints.people >= s.party_min:
-                    reasons.append(f"支持 {s.party_min}-{s.party_max} 人（你们 {constraints.people} 人）")
-                if constraints.date_hint and _date_delta(d, constraints.date_hint) == 0:
-                    reasons.append("正好命中期望日期")
-                elif constraints.date_hint:
-                    reasons.append(f"距期望日期仅差 {_date_delta(d, constraints.date_hint)} 天")
-                if s.left_num <= 3:
-                    reasons.append(f"仅剩 {s.left_num} 个名额，手慢无")
-                if store.distance_m:
-                    reasons.append(f"距你 {store.distance_text or f'{store.distance_km:.1f}km'}")
+    # 成本分以候选内最低人均价为基准归一化到 (0,1]，避免 1/价格 把成本权重压平，
+    # 让"便宜"在评分里与日期贴近度（0~1）处于同一量纲。
+    cheapest = min(x["per_person"] for x in feasible) or 1.0
 
-                plans.append(PartyPlan(
-                    store=store, date=d, session=s, people=constraints.people,
-                    total_price=total, per_person=per_person, score=score, reasons=reasons,
-                ))
+    # —— 阶段二：软排序打分 ——
+    plans: list[PartyPlan] = []
+    for x in feasible:
+        store, d, s = x["store"], x["date"], x["session"]
+        total, per_person = x["total"], x["per_person"]
+        cost_score = cheapest / per_person if per_person > 0 else 0.0
+        closeness = 1.0 / (1 + _date_delta(d, constraints.date_hint)) if constraints.date_hint else 0.0
+        weekend_bonus = 0.3 if (constraints.want_weekend is True and _is_weekend(d)) else 0.0
+        # 名额越紧张越抢手：left≤2 加 0.1，3~4 加 0.05，名额充足不加分
+        scarcity = 0.1 if s.left_num <= 2 else (0.05 if s.left_num <= 4 else 0.0)
+        score = cost_score + closeness + weekend_bonus + scarcity
+
+        reasons: list[str] = []
+        if constraints.budget is not None:
+            reasons.append(f"总价 ¥{total:.2f} 在预算 ¥{constraints.budget:.0f} 内")
+        reasons.append(f"人均仅 ¥{per_person:.2f}")
+        reasons.append(f"支持 {s.party_min}-{s.party_max} 人（你们 {constraints.people} 人）")
+        if constraints.date_hint and _date_delta(d, constraints.date_hint) == 0:
+            reasons.append("正好命中期望日期")
+        elif constraints.date_hint:
+            reasons.append(f"距期望日期仅差 {_date_delta(d, constraints.date_hint)} 天")
+        if s.left_num <= 3:
+            reasons.append(f"仅剩 {s.left_num} 个名额，手慢无")
+        if store.distance_m:
+            reasons.append(f"距你 {store.distance_text or f'{store.distance_km:.1f}km'}")
+
+        plans.append(PartyPlan(
+            store=store, date=d, session=s, people=constraints.people,
+            total_price=total, per_person=per_person, score=score, reasons=reasons,
+        ))
 
     plans.sort(key=lambda p: -p.score)
     return plans[: constraints.max_plans]
