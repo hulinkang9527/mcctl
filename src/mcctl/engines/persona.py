@@ -65,7 +65,7 @@ def get_persona(code: str) -> dict[str, Any] | None:
 
 
 def score(answers: list[str]) -> PersonaResult:
-    """answers: 每题 'a' 或 'b'，长度可少于总题数（按已答计分）。"""
+    """answers: 每题选项字母（a/b，终局题可为 c/d），长度可少于总题数。"""
     data = load_data()
     qs, ps = data["questions"], data["personas"]
     scores = {p["code"]: 0 for p in ps}
@@ -73,7 +73,10 @@ def score(answers: list[str]) -> PersonaResult:
         if i >= len(qs):
             break
         choice = (choice or "a").lower()
-        picked = qs[i][choice if choice in ("a", "b") else "a"]["score"]
+        valid = [k for k in ("a", "b", "c", "d") if k in qs[i]]
+        if choice not in valid:
+            choice = "a"
+        picked = qs[i][choice]["score"]
         for code, pts in picked.items():
             scores[code] = scores.get(code, 0) + pts
     ordered = sorted(scores.items(), key=lambda kv: (-kv[1], [p["code"] for p in ps].index(kv[0])))

@@ -10,6 +10,7 @@
 
 <p align="center">
   <a href="https://hulinkang9527.github.io/mcctl/"><img alt="Play" src="https://img.shields.io/badge/▶%20%E6%89%8B%E6%9C%BA%E9%9B%B6%E5%AE%89%E8%A3%85-30%E7%A7%92%E6%B5%8B%E9%BA%A6%E9%97%A8%E4%BA%BA%E6%A0%BC-DA291C?style=for-the-badge"></a>
+  <a href="https://github.com/hulinkang9527/mcctl/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/hulinkang9527/mcctl/actions/workflows/ci.yml/badge.svg"></a>
   <a href="https://github.com/hulinkang9527/mcctl/stargazers"><img alt="GitHub Stars" src="https://img.shields.io/github/stars/hulinkang9527/mcctl?style=social&label=Star"></a>
 </p>
 
@@ -17,7 +18,7 @@
   <img alt="Python" src="https://img.shields.io/badge/Python-3.10%2B-blue?logo=python&logoColor=white">
   <img alt="MCP Tools" src="https://img.shields.io/badge/MCP%20Tools-33-DA291C">
   <img alt="CLI" src="https://img.shields.io/badge/CLI-Typer%20%2F%20Rich-FFC72C">
-  <img alt="Tests" src="https://img.shields.io/badge/tests-41%20passed-2E9E5B">
+  <img alt="Tests" src="https://img.shields.io/badge/tests-55%20passed-2E9E5B">
   <img alt="License" src="https://img.shields.io/badge/License-MIT-2E9E5B">
   <img alt="Unofficial" src="https://img.shields.io/badge/%E9%9D%9E%E5%AE%98%E6%96%B9-creative%20work-8A6410">
 </p>
@@ -72,6 +73,42 @@ mcctl demo
 </p>
 
 > 安装后一条 `mcctl demo` 即可串演：人格测试 → 配餐 → 领券凑单 → 下单演练 → 积分活动。
+
+## 🕹️ 网页演示（零安装，手机直接玩）
+
+<p align="center">
+  <img src="./docs/assets/playground.gif" alt="mcctl 网页演示" width="700" />
+</p>
+
+<p align="center">
+  <a href="https://hulinkang9527.github.io/mcctl/"><b>👉 点我打开在线 Playground</b></a>
+  · 打开后点「⚡ 一键看完整示例」，即可看到 条件 → 套餐 → 优惠对比 → 推荐理由。
+</p>
+
+<p align="center">
+  <img src="./docs/assets/personas/mcctl-persona-BIGS.png" width="180" />
+  <img src="./docs/assets/personas/mcctl-persona-SPCY.png" width="180" />
+  <img src="./docs/assets/personas/mcctl-persona-SQUAD.png" width="180" />
+  <img src="./docs/assets/personas/mcctl-persona-LOYT.png" width="180" />
+</p>
+
+## 🏗️ 架构速览
+
+```
+            mcctl 命令行 (Typer + Rich)          网页 Playground (纯静态)
+                       │                                  │
+              ┌────────▼─────────┐              ┌──────────▼──────────┐
+              │  业务编排层 service│              │  内置数据 + 前端逻辑  │
+              │  decide/diet/save │              │  (无后端，免登录)    │
+              │  party/order/...  │              └─────────────────────┘
+              └────────┬─────────┘
+                       │ 33 个 MCP 工具
+              ┌────────▼────────────────┐
+              │  MCP 客户端 (mcp_client) │
+              │  实时官方  →  离线 Mock  │  连不上自动降级，不静默出错
+              └─────────────────────────┘
+```
+完整设计见 [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)。
 
 ## 🧭 命令速览
 

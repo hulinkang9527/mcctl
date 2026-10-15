@@ -83,14 +83,18 @@ const PERSONAS = [
     cta: "mcctl save", meal: ["BUR_DOUBLE_CHEESE", "SIDE_FRIES_M", "DRK_COLA_ZERO"] },
 ];
 
-// ---- 6 道 a/b 题（与 personas.json 一致）----
+// ---- 8 道题（前 7 题二选一，第 8 题为四选一结局题，权重 1）----
 const QUESTIONS = [
-  { q: "你最常在什么状态下打开麦当劳？", a: ["清晨，困，但想体面地开始一天", { EARL: 2, FITA: 1 }], b: ["深夜，代码/方案还没跑完", { NITE: 2, SPCY: 1 }] },
-  { q: "打开菜单，你的第一眼会找？", a: ["经典招牌，老伙计最稳", { BIGS: 2, EARL: 1 }], b: ["本期新品和限定，不试就亏了", { SPCY: 2, SWEET: 1 }] },
-  { q: "你怎么看待热量这回事？", a: ["蛋白质和热量必须心里有数", { FITA: 2, LOYT: 1 }], b: ["吃都吃了，快乐从不计卡", { SWEET: 2, NITE: 1 }] },
-  { q: "下单前，你会研究优惠券和到手价吗？", a: ["必须先领券、凑满减，省到就是赚到", { LOYT: 2, SQUAD: 1 }], b: ["没太注意，想吃就点", { BIGS: 2, SWEET: 1 }] },
-  { q: "吃麦当劳对你来说主要是？", a: ["快速回血，吃完继续战斗", { NITE: 2, BIGS: 1 }], b: ["犒劳自己，需要一点仪式感", { SWEET: 2, EARL: 1 }] },
-  { q: "账户里的积分和一次抽奖机会，你会？", a: ["积分当钱花，兑换最划算的", { LOYT: 2, FITA: 1 }], b: ["当然抽一把，万一中了呢", { SQUAD: 2, SPCY: 1 }] },
+  { q: "你到店/打开点餐页后，通常是？", a: ["秒选熟悉套餐，不纠结（果断）", { BIGS: 2, EARL: 1 }], b: ["研究菜单很久，来回对比（探索）", { SPCY: 2, SWEET: 1 }] },
+  { q: "下单前，你会先研究优惠券吗？", a: ["直接下单，省时间（效率）", { NITE: 2, BIGS: 1 }], b: ["先把优惠券全部研究一遍（省钱）", { LOYT: 2, FITA: 1 }] },
+  { q: "你点餐更偏爱？", a: ["固定搭配，次次都差不多（稳定）", { EARL: 2, BIGS: 1 }], b: ["每次都试新组合（尝鲜）", { SWEET: 2, SPCY: 1 }] },
+  { q: "朋友聚餐时，你通常是？", a: ["拍板、算预算、张罗的人（主导）", { SQUAD: 2, LOYT: 1 }], b: ["跟着大家选，吃啥都行（跟随）", { FITA: 2, SWEET: 1 }] },
+  { q: "面对新品，你会？", a: ["立刻尝试，怕错过（冒险）", { SPCY: 2, SQUAD: 1 }], b: ["继续买熟悉的，稳妥", { FITA: 2, BIGS: 1 }] },
+  { q: "你更在意？", a: ["吃得满足、分量够、开心（满足）", { BIGS: 2, SWEET: 1 }], b: ["每一块钱都花得划算（价值）", { LOYT: 2, SQUAD: 1 }] },
+  { q: "你有固定的必点款吗？", a: ["有，认准了就一直点（忠诚）", { EARL: 2, BIGS: 1 }], b: ["没有，喜欢不断更换（变化）", { NITE: 2, SQUAD: 1 }] },
+  { q: "如果今天的麦门之旅只能选一个结局，你选？", final: true,
+    a: ["极致省钱（券王结局）", { LOYT: 1 }], b: ["快乐尝鲜（新品结局）", { SPCY: 1 }],
+    c: ["稳定满足（经典结局）", { BIGS: 1 }], d: ["朋友全员满意（团长结局）", { SQUAD: 1 }] },
 ];
 
 // ---------- DOM ----------
@@ -119,8 +123,10 @@ function renderQuestion() {
   setTimeout(() => {
     qEl.classList.remove("q-out");
     qEl.textContent = `${i + 1}. ${item.q}`;
-    $("optA").textContent = item.a[0];
-    $("optB").textContent = item.b[0];
+    const letters = ["a", "b", "c", "d"].filter((k) => item[k]);
+    optsEl.innerHTML = letters.map((k) =>
+      `<button class="opt" data-choice="${k}"><span class="opt__key">${k.toUpperCase()}</span><span class="opt__text">${item[k][0]}</span></button>`
+    ).join("");
     $("qCount").textContent = `${i + 1} / ${QUESTIONS.length}`;
     $("progressBar").style.width = `${(i / QUESTIONS.length) * 100 + 8}%`;
     qEl.classList.add("q-in");
@@ -456,6 +462,13 @@ $("logoEaster").addEventListener("click", () => {
 
 // ---------- 事件 ----------
 $("startBtn").addEventListener("click", showQuiz);
+function showDemo() {
+  const sec = $("demoSec");
+  sec.classList.remove("hidden");
+  sec.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+$("demoBtn").addEventListener("click", showDemo);
+$("demoStart").addEventListener("click", () => { showQuiz(); });
 $("quizRestart").addEventListener("click", showQuiz);
 $("againBtn").addEventListener("click", showQuiz);
 $("friendBtn").addEventListener("click", showQuiz);
@@ -465,8 +478,10 @@ $("starRailX").addEventListener("click", (e) => {
   e.preventDefault(); e.stopPropagation();
   $("starRail").classList.add("hidden");
 });
-document.querySelectorAll(".opt").forEach((b) =>
-  b.addEventListener("click", () => choose(b.dataset.choice)));
+$("quizOpts").addEventListener("click", (e) => {
+  const btn = e.target.closest(".opt");
+  if (btn) choose(btn.dataset.choice);
+});
 
 // ---------- 麦门玩法：daily / roll / pair ----------
 const GOOD_LUCK = ["点经典不纠结","加一份小食","出门先领券","堂食趁热","和朋友拼分享装","板烧去酱","零度可乐配一切","凑满减再下单","外送准时点","麦乐鸡蘸两酱","加一份薯饼","得来速不停车"];
@@ -557,6 +572,9 @@ function initPlay() {
       else playPair();
     }));
   $("pairGo").addEventListener("click", playPair);
+  // 模式徽章展开/收起
+  $("modeBadge").addEventListener("click", () => $("modeNote").classList.remove("hidden"));
+  $("modeNoteX").addEventListener("click", () => $("modeNote").classList.add("hidden"));
 }
 
 // ---------- 初始化：好友深链 ?p=CODE ----------
