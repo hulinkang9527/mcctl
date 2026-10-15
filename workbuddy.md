@@ -104,6 +104,25 @@
 
 ---
 
+## 8. 真实 MCP Token 接入与真机核验（第三轮迭代）
+
+**我：** 申请到了麦当劳 MCP Token，在 WorkBuddy 里完成 `mcd-mcp` 连接器配置（写入 `~/.workbuddy/mcp.json`，streamablehttp + Bearer），并让仓库 `.env` 同步（已被 gitignore）。帮我把项目切到真实模式验证一遍。
+
+**WorkBuddy：** `mcctl --live tools` 实测返回 **35 个官方工具**。随后逐级真机调用，暴露并修复了一批"只有真实模式才会出现"的问题（commit `a1f1fa8`，81 个 pytest 用例全部通过）：
+
+1. **官方返回多为裸数组**，原解析层只认 `{key: [...]}` 包裹 → 真实模式全部静默空列表。新增 `_rows()/_all_rows()` 统一收口；
+2. **部分工具返回「Markdown 字段说明 + 完整 JSON」的文本**，整段 `json.loads` 失败 → 新增三级兜底的 `_extract_json()`；
+3. **`list-nutrition-foods` 直接返回文本表**（`[160]{productName,...}:` 格式、无品类字段）→ 新增表格解析 + 按菜名推断品类，真实模式取到 160 条餐品并产出配餐方案；
+4. **业务失败 `success=false` 被当作空结果** → 改为显式抛错（这正是"派对显示没有方案"的真凶：调不通被伪装成了没结果）。
+
+**真机实测数据（非文档推断）**：4 个在售派对 SPU、281 个可参与城市、上海 169 家门店、场次 50 元/人（`price 5000`，单位为分）、余位 12；全链路 `party plan --city 上海` 约 6 秒返回真实档期。
+
+**我：** 这轮验证说明什么？
+
+**WorkBuddy：** 说明 mcctl 不只是"能跑 Mock 的演示品"——真实模式下 `--live tools`、派对全链路、菜单解析、配餐引擎均已实测跑通；`calculate-price` 等下单类工具的真实参数（`storeCode + orderType + beType`）已在 `MCP_INTEGRATION.md` 中如实标注为边界，未做虚假宣传。核验时可用 WorkBuddy 本会话对话记录 + commit `a1f1fa8` 交叉印证。
+
+---
+
 ## 6. 产出物
 
 - Python 包 + Typer/Rich CLI（真实 MCP Client + 离线 Mock Client 自动降级）
