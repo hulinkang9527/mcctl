@@ -10,7 +10,7 @@ version = "1.0.0"
 description = "mcctl — 麦门的 kubectl：麦当劳中国 MCP 的命令行控制面与智能体 Skill（人格决策 / 控卡配餐 / 一键省钱 / 安全下单 / 积分派对）"
 readme = "README.md"
 requires-python = ">=3.10"
-license = { text = "MIT" }
+license = "MIT"
 authors = [{ name = "mcctl contributors" }]
 keywords = ["mcp", "mcdonalds", "麦当劳", "cli", "skill", "model-context-protocol", "1024", "mcctl"]
 classifiers = [
@@ -36,6 +36,8 @@ mcctl = "mcctl.cli:app"
 [project.urls]
 Homepage = "https://github.com/hulinkang9527/mcctl"
 Repository = "https://github.com/hulinkang9527/mcctl"
+Documentation = "https://github.com/hulinkang9527/mcctl#readme"
+Changelog = "https://github.com/hulinkang9527/mcctl/releases"
 
 [tool.setuptools.packages.find]
 where = ["src"]
