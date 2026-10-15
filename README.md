@@ -23,7 +23,7 @@
 </p>
 
 <p align="center">
-  <img src="./docs/assets/demo.gif" alt="mcctl demo" width="680" />
+  <img src="./docs/assets/playground.gif" alt="mcctl 网页 Playground：6 题测人格，生成可分享麦籍卡" width="760" />
 </p>
 
 ---
@@ -67,19 +67,11 @@ mcctl demo
 
 ## 📺 终端演示
 
-```text
-$ mcctl whoami
-🪪 你是：板烧修行者（FITA）— 高蛋白苦行僧 · 体脂率刺客
+<p align="center">
+  <img src="./docs/assets/demo.gif" alt="mcctl 终端演示" width="700" />
+</p>
 
-$ mcctl save --cart "巨无霸:1,薯条(中):1,可口可乐(中):1"
-   ① 一键领券 6 张   ② 无券基线 ¥46.00   ③ 满40减10
-   👉 实付 ¥36.00，本轮省 ¥10.00（21.7%）
-
-$ mcctl party plan --city 上海 --people 8 --budget 600 --date-hint 2026-10-25
-   ① 外滩中山东一路餐厅 · 10-25 14:00-15:30 · ¥576（人均¥72 · 命中期望日期）
-   ② 陆家嘴环路餐厅     · 10-25 14:00-15:30 · ¥600（人均¥75）
-   → 人数/预算/日期/名额约束自动求解，追加 --confirm 一键预约
-```
+> 安装后一条 `mcctl demo` 即可串演：人格测试 → 配餐 → 领券凑单 → 下单演练 → 积分活动。
 
 ## 🧭 命令速览
 
