@@ -490,3 +490,38 @@ body {
 .demo__reasons li { margin: 6px 0; }
 .demo__cta { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
 .demo__tip { font-size: 0.8rem; color: #8a6410; }
+
+/* ---------- 派对策划师 ---------- */
+.party { max-width: 860px; margin: 0 auto; padding: 44px 16px; }
+.party__sub { text-align: center; color: #8a6410; margin-bottom: 20px; font-size: 0.95rem; }
+.party__form {
+  display: flex; gap: 14px; align-items: flex-end; justify-content: center;
+  flex-wrap: wrap; background: #fff; border: 3px solid var(--mcd-dark);
+  box-shadow: var(--shadow); padding: 18px; margin-bottom: 22px;
+}
+.party__field { display: flex; flex-direction: column; gap: 6px; font-size: 0.85rem; font-weight: 700; }
+.party__field input[type="number"] {
+  width: 110px; font-family: inherit; font-size: 1rem; padding: 8px 10px;
+  border: 2px solid var(--mcd-dark); background: var(--mcd-cream);
+}
+.party__field--check { flex-direction: row; align-items: center; padding-bottom: 9px; }
+.party__field--check input { width: 18px; height: 18px; }
+.party__results { display: flex; flex-direction: column; gap: 14px; }
+.party-empty {
+  background: #fff; border: 3px dashed var(--mcd-dark); padding: 22px;
+  text-align: center; color: #8a6410;
+}
+.pcard {
+  background: #fff; border: 3px solid var(--mcd-dark); box-shadow: var(--shadow);
+  padding: 16px 18px; position: relative;
+}
+.pcard--best { border-color: var(--mcd-green); background: #f3fbf5; box-shadow: 6px 6px 0 var(--mcd-green); }
+.pcard__rank { font-weight: 800; font-size: 1.05rem; margin-bottom: 8px; color: var(--mcd-green); }
+.pcard__store { font-weight: 700; font-size: 1.05rem; }
+.pcard__dist { font-size: 0.82rem; font-weight: 400; color: #8a6410; margin-left: 8px; }
+.pcard__when { color: #555; margin: 6px 0 10px; font-size: 0.92rem; }
+.pcard__prices { display: flex; gap: 22px; margin-bottom: 10px; flex-wrap: wrap; }
+.pcard__total b, .pcard__per b { font-size: 1.25rem; }
+.pcard__per b { color: var(--mcd-red); }
+.pcard__reasons { display: flex; flex-direction: column; gap: 4px; }
+.pcard__reasons span { font-size: 0.88rem; color: #2c5d3a; }

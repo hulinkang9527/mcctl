@@ -150,6 +150,25 @@
     </div>
   </section>
 
+  <!-- 派对策划师（招牌功能） -->
+  <section class="party" id="party">
+    <h2 class="sec__title">🎉 麦麦派对策划师</h2>
+    <p class="party__sub">告诉它人数、预算、要不要周末，自动在 23 个场次里筛出最优方案并排序，<b>不用你挨个翻门店</b>。</p>
+    <div class="party__form">
+      <label class="party__field">👥 人数
+        <input type="number" id="partyPeople" value="10" min="1" max="12" />
+      </label>
+      <label class="party__field">💰 总预算 ¥
+        <input type="number" id="partyBudget" value="1000" min="0" step="50" />
+      </label>
+      <label class="party__field party__field--check">
+        <input type="checkbox" id="partyWeekend" /> 仅周末
+      </label>
+      <button class="btn btn--primary btn--lg" id="partyGo">🎯 生成最优方案</button>
+    </div>
+    <div class="party__results" id="partyResults"></div>
+  </section>
+
   <!-- 测试区 -->
   <main class="wrap">
     <section class="quiz hidden" id="quiz">
@@ -263,5 +282,6 @@ $ mcctl save --cart "巨无霸:1,薯条(中):1,可口可乐(中):1"
   <div class="toast hidden" id="toast"></div>
   <script src="vendor/qrcode.js"></script>
   <script src="app.js"></script>
+  <script src="party.js"></script>
 </body>
 </html>
