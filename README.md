@@ -45,7 +45,7 @@
   <a href="https://hulinkang9527.github.io/mcctl/">hulinkang9527.github.io/mcctl</a><br />
   <sub>8 题出结果 · 可下载麦籍卡 · 可算好友匹配度（离线 Playground）</sub><br /><br />
   <b>⚡ 一行装上就跑</b><br />
-  <code>pip install mcd-mcctl &amp;&amp; mcctl whoami</code><br /><br />
+  <code>pip install git+https://github.com/hulinkang9527/mcctl.git &amp;&amp; mcctl whoami</code><br /><br />
   <b>🧭 一条命令串演全部能力</b><br />
   <code>mcctl demo</code> — 人格 → 配餐 → 省钱 → 下单演练 → 积分
 </td>
@@ -74,24 +74,19 @@
 > 网页 Playground 为**离线演示**（纯静态、内置示例菜单与价格），用于展示人格测试与配餐逻辑；
 > 真实 MCP 工具调用请在 CLI 实时模式下验证（方式二 / 方式四）。
 
-**方式二（PyPI · 一行命令体验）**：
+**方式二（从源码 · 推荐）**：
 
 ```bash
-pip install mcd-mcctl      # Python 包名为 mcd-mcctl，命令行入口仍为 mcctl
+git clone https://github.com/hulinkang9527/mcctl.git && cd mcctl
+pip install -e .
 mcctl demo                 # 一键串演：人格→配餐→省钱→下单演练→积分
 mcctl whoami               # 8 题测麦麦人格
 mcctl decide -p FITA       # 板烧修行者的命定套餐
 ```
 
-> 说明：PyPI 上的 `mcctl` 包名已被无关的第三方项目占用，所以发行包名为 `mcd-mcctl`；安装后命令行入口仍是 `mcctl`，无需修改使用习惯。
+也可以免 clone 一行安装：`pip install git+https://github.com/hulinkang9527/mcctl.git`。
 
-**方式三（从源码）**：
-
-```bash
-git clone https://github.com/hulinkang9527/mcctl.git && cd mcctl
-pip install -e .
-mcctl demo
-```
+**方式三（PyPI，发布流程中）**：PyPI 包名将是 `mcd-mcctl`（`mcctl` 已被无关项目占用，安装后命令行入口仍是 `mcctl`）。**当前尚未上架，请先用方式二安装**，上架后本节会同步更新。
 
 **方式四（接入真实 MCP）**：到 <https://open.mcd.cn/mcp> 申请 Token，然后 `export MCD_MCP_TOKEN=你的Token && mcctl --live tools`。通用 MCP Client（WorkBuddy / Cursor / VS Code …）直接使用 [`mcp-config.example.json`](mcp-config.example.json)。
 

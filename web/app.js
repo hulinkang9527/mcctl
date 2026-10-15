@@ -352,7 +352,7 @@ function drawCard(p) {
   ctx.fillStyle = "#FFFFFF"; ctx.font = "26px monospace";
   ctx.fillText("🍔 mcctl · 麦门的 kubectl", 48, 1253);
   ctx.fillStyle = "#FFC72C"; ctx.font = "bold 26px monospace";
-  ctx.fillText("hulinkang9527.github.io/mcctl", 48, 1294);
+  ctx.fillText("hulinkang9527.github.io/mcctl · 觉得好玩求个⭐", 48, 1294);
   ctx.textBaseline = "alphabetic";
 }
 
@@ -365,15 +365,11 @@ function downloadCard() {
   toast("麦籍卡已下载，快晒到群里 🍔");
 }
 
-// 分享文案 A/B：社交型人格走「组队版」，其余走「挑战版」
+// 分享文案：固定话术「我是XX（CODE），你呢？」+ 直达链接，降低朋友跟测门槛
 function shareText(p) {
   const url = personaUrl(p.code);
-  if (p.code === "SQUAD" || p.code === "NITE") {
-    return `我是「${p.emoji} ${p.name}」——${p.motto}\n` +
-      `来测测你是 8 型麦门人的哪一派，还能一键算麦当劳最省到手价 👉 ${url}`;
-  }
-  return `我在【mcctl 麦门人格测试】里测出是「${p.emoji} ${p.name} ${p.code}」——${p.motto}\n` +
-    `你是哪种麦门人？8 题测，敢晒代号吗 👉 ${url}`;
+  return `我是「${p.emoji} ${p.name} ${p.code}」——${p.motto}，你呢？\n` +
+    `8 题测出你的麦门人格，手机零安装，还能一键算麦当劳最省到手价 👉 ${url}`;
 }
 
 async function share() {

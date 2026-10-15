@@ -832,6 +832,14 @@ def demo_cmd(ctx: typer.Context):
         ui.console.print("  " + s)
     ui.console.print(ui.table_campaigns(out["campaigns"]))
     ui.console.print(ui.render_account(out["points"]))
+    ui.console.print(
+        ui.Panel.fit(
+            "[bold]觉得 mcctl 好玩？[/bold]\n"
+            "⭐ 给项目点个 Star：https://github.com/hulinkang9527/mcctl\n"
+            "🍔 手机零安装网页版（8 题测麦门人格）：https://hulinkang9527.github.io/mcctl/",
+            border_style=ui.MCD_GOLD,
+        )
+    )
 
 
 if __name__ == "__main__":
