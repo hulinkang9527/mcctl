@@ -307,7 +307,7 @@ class McD:
         return out
 
     async def party_dates(self, store: str) -> list[str]:
-        data = await self.call("query-partystore-date", store=store)
+        data = await self.call("query-party-store-date", store=store)
         dates = data.get("dates", []) if isinstance(data, dict) else []
         if dates and isinstance(dates[0], dict):
             return [str(d.get("date", d.get("dateStr", ""))) for d in dates if isinstance(d, dict)]
@@ -315,7 +315,7 @@ class McD:
 
     async def party_sessions(self, store: str, date: str) -> list[PartySession]:
         """门店 + 日期下的可约场次（结构化：人数范围 / 价格 / 剩余名额）。"""
-        data = await self.call("query-partystore-session", store=store, date=date)
+        data = await self.call("query-party-store-session", store=store, date=date)
         raw = data.get("sessions", []) if isinstance(data, dict) else []
         out: list[PartySession] = []
         for s in raw:

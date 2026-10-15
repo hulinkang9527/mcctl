@@ -16,7 +16,7 @@
 
 <p align="center">
   <img alt="Python" src="https://img.shields.io/badge/Python-3.10%2B-blue?logo=python&logoColor=white">
-  <img alt="CLI MCP Tools" src="https://img.shields.io/badge/CLI%20MCP%20Tools-33-DA291C">
+  <img alt="CLI MCP Tools" src="https://img.shields.io/badge/CLI%20MCP%20Tools-35-DA291C">
   <img alt="CLI" src="https://img.shields.io/badge/CLI-Typer%20%2F%20Rich-FFC72C">
   <img alt="Tests" src="https://img.shields.io/badge/tests-70%20passed-2E9E5B">
   <img alt="License" src="https://img.shields.io/badge/License-MIT-2E9E5B">
@@ -52,7 +52,7 @@
 </tr>
 </table>
 
-`mcctl` 把麦当劳中国官方 MCP 开放的 **33 个工具**（CLI 已全量集成）编排成一套程序员命令：人格测试、控卡配餐、一键领券凑单、安全下单、积分兑换、派对预约，还能作为 **Agent Skill** 装进 WorkBuddy / Cursor。
+`mcctl` 把麦当劳中国官方 MCP 开放的 **35 个工具**（CLI 已全量集成）编排成一套程序员命令：人格测试、控卡配餐、一键领券凑单、安全下单、积分兑换、派对预约，还能作为 **Agent Skill** 装进 WorkBuddy / Cursor。
 
 > **网页 vs CLI 的边界，先说清楚**：网页 Playground 是**离线演示**（纯静态、预置菜单与价格，不调用官方 MCP）；
 > 想要**实时菜单 / 库存 / 到手价**请用 CLI —— `mcctl --live`（需在 open.mcd.cn/mcp 申请 Token，连不上会自动降级并明确提示）。
@@ -65,7 +65,7 @@
 - 💸 **真·省钱引擎**：一键领券 → 逐券试算 → 智能凑单，给你"基线 → 优惠 → 实付"和节省百分比，**拒绝伪优惠**。
 - 🛒 **安全下单闭环**：到店 / 外送全链路，所有交易默认**演练**，必须 `--confirm`，真实环境跳转官方支付、**不自动扣款**。
 - 🎉 **麦麦派对策划师（主打）**：`mcctl party plan` 把「城市 → 门店 → 日期 → 场次」做成约束求解——人数 / 预算 / 期望日期 / 名额硬约束卡死，输出 Top3 方案，`--confirm` 一键预约。
-- 🔌 **CLI 已集成 33 个 MCP 工具**：真实 Client + 离线 Mock 自动降级，**clone 即零配置体验**，配 Token 切实时数据。四种形态：Python 包 + CLI、Agent Skill、**离线网页 Playground**、可复用 SDK。
+- 🔌 **CLI 已集成 35 个 MCP 工具**：真实 Client + 离线 Mock 自动降级，**clone 即零配置体验**，配 Token 切实时数据。四种形态：Python 包 + CLI、Agent Skill、**离线网页 Playground**、可复用 SDK。
 
 ## 🚀 快速开始
 
@@ -126,7 +126,7 @@ mcctl decide -p FITA       # 板烧修行者的命定套餐
               │  decide/diet/save │              │  (无后端，免登录)    │
               │  party/order/...  │              └─────────────────────┘
               └────────┬─────────┘
-                       │ 33 个 MCP 工具
+                       │ 35 个 MCP 工具
               ┌────────▼────────────────┐
               │  MCP 客户端 (mcp_client) │
               │  实时官方  →  离线 Mock  │  连不上自动降级，不静默出错
@@ -175,7 +175,7 @@ mcctl decide -p FITA       # 板烧修行者的命定套餐
 
 ```bash
 pip install -e ".[dev]"
-pytest                      # 人格(512 种作答) / 配餐 / 省钱 / 派对策划 / 33 工具状态机 / 字段容错
+pytest                      # 人格(512 种作答) / 配餐 / 省钱 / 派对策划 / 35 工具状态机 / 字段容错
 ```
 
 测试覆盖的两处要点：

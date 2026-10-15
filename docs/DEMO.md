@@ -1,6 +1,6 @@
 # 离线演示与录屏脚本（DEMO）
 
-无需 Token、无需联网，安装后即可完整演示全部 33 个 MCP 工具链路。以下脚本也适合录制参赛宣传视频 / GIF。
+无需 Token、无需联网，安装后即可完整演示全部 35 个 MCP 工具链路。以下脚本也适合录制参赛宣传视频 / GIF。
 
 ## 0. 准备
 
@@ -82,7 +82,7 @@ mcctl --mock --json save --cart "巨无霸:1,薯条(中):1,可口可乐(中):1"
 
 ```bash
 export MCD_MCP_TOKEN=在 https://open.mcd.cn/mcp 申请到的 Token
-mcctl --live tools          # 应列出官方 33 个工具
+mcctl --live tools          # 应列出官方 35 个工具
 mcctl --live calendar       # 真实当月活动
 mcctl config                # 确认模式（Token 脱敏）
 ```
@@ -91,7 +91,7 @@ mcctl config                # 确认模式（Token 脱敏）
 
 ```bash
 pip install -e ".[dev]"
-pytest                      # 41 个用例：人格/配餐/省钱/派对策划/33工具状态机/字段容错
+pytest                      # 41 个用例：人格/配餐/省钱/派对策划/35工具状态机/字段容错
 ```
 
 > 演示数据均为非官方示例；真实餐品、价格、优惠与供应状态以麦当劳官方渠道实时结果为准。

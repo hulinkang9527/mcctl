@@ -25,7 +25,7 @@
 | 8 张人格卡 | `docs/assets/personas/*.png` |
 | 分享封面（链接预览用） | https://hulinkang9527.github.io/mcctl/og-cover.png |
 
-> 关于数据来源的表述：**网页为离线 Playground（预置数据）**；**CLI 已集成 33 个官方 MCP 工具，配置 Token 后 `mcctl --live` 走实时数据**。分享时请勿把网页演示数据描述为官方实时结果。
+> 关于数据来源的表述：**网页为离线 Playground（预置数据）**；**CLI 已集成 35 个官方 MCP 工具，配置 Token 后 `mcctl --live` 走实时数据**。分享时请勿把网页演示数据描述为官方实时结果。
 
 ## 渠道话术
 
@@ -33,7 +33,7 @@
 
 > kubectl 管你的集群，mcctl 管你的麦门。
 >
-> 把麦当劳中国官方 MCP 的 33 个工具编排成一套程序员命令：`mcctl whoami`（8 题人格测试 + 麦籍卡）、`mcctl decide`（人格化配餐）、`mcctl save`（领券凑单到手价）、`mcctl party plan`（派对场次约束求解）。真实 MCP Client + 离线 Mock 双客户端自动降级，clone 下来不配 Token 也能完整体验；交易动作默认演练。
+> 把麦当劳中国官方 MCP 的 35 个工具编排成一套程序员命令：`mcctl whoami`（8 题人格测试 + 麦籍卡）、`mcctl decide`（人格化配餐）、`mcctl save`（领券凑单到手价）、`mcctl party plan`（派对场次约束求解）。真实 MCP Client + 离线 Mock 双客户端自动降级，clone 下来不配 Token 也能完整体验；交易动作默认演练。
 >
 > 零安装网页版（手机直接开）：https://hulinkang9527.github.io/mcctl/
 > 仓库：https://github.com/hulinkang9527/mcctl

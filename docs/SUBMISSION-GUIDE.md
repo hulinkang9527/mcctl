@@ -21,7 +21,7 @@ grep -rn "your-name\|<your-name>" .   # 期望：无输出（docs/SUBMISSION-GUI
    ```bash
    cp .env.example .env        # 然后把 Token 填进 .env（.env 已被 .gitignore 忽略）
    # 或： export MCD_MCP_TOKEN=你的Token
-   mcctl --live tools          # 能列出官方 33 个工具即成功
+   mcctl --live tools          # 能列出官方 35 个工具即成功
    ```
 
 ## 第 2 步：在 GitHub 创建 Public 仓库并推送
@@ -51,7 +51,7 @@ grep -rn "your-name\|<your-name>" .   # 期望：无输出（docs/SUBMISSION-GUI
 【参赛申请】
 项目名称：mcctl · 麦门的 kubectl
 项目地址：https://github.com/你的用户名/mcctl
-项目简介：mcctl 把麦当劳中国官方 MCP 的 33 个工具编排成一套程序员友好的命令行（灵感来自 kubectl）：麦麦人格测试 mcctl whoami（8 型人格 + 可分享像素风麦籍卡）、人格化控卡高蛋白配餐、一键领券/智能凑单/真实到手价、到店与外送安全下单闭环、积分兑换抽奖、活动日历，以及主打亮点「麦麦派对策划师」mcctl party plan——按人数/预算/期望日期约束求解生日派对/品鉴会最优场次（城市→门店→日期→场次→下单全链路）。同时提供可装入 WorkBuddy/Cursor 的 Agent Skill，以及零安装的像素风网页 Playground。真实 MCP 与离线 Mock 双客户端自动降级，clone 即可完整体验，配置 Token 即切真实数据；含 41 个单元测试与 CI，所有交易动作默认演练、二次确认，不接触支付与凭证。
+项目简介：mcctl 把麦当劳中国官方 MCP 的 35 个工具编排成一套程序员友好的命令行（灵感来自 kubectl）：麦麦人格测试 mcctl whoami（8 型人格 + 可分享像素风麦籍卡）、人格化控卡高蛋白配餐、一键领券/智能凑单/真实到手价、到店与外送安全下单闭环、积分兑换抽奖、活动日历，以及主打亮点「麦麦派对策划师」mcctl party plan——按人数/预算/期望日期约束求解生日派对/品鉴会最优场次（城市→门店→日期→场次→下单全链路）。同时提供可装入 WorkBuddy/Cursor 的 Agent Skill，以及零安装的像素风网页 Playground。真实 MCP 与离线 Mock 双客户端自动降级，clone 即可完整体验，配置 Token 即切真实数据；含 70 个单元测试与 CI，所有交易动作默认演练、二次确认，不接触支付与凭证。
 ```
 
 提交后系统会在 Issue 下回复报名成功 / 失败原因；失败按提示改完重发即可。
@@ -60,7 +60,7 @@ grep -rn "your-name\|<your-name>" .   # 期望：无输出（docs/SUBMISSION-GUI
 
 可以做：
 - 把 Pages 网页 + 一条演示视频 / GIF（脚本见 `docs/DEMO.md`）发到 V2EX、掘金、少数派、即刻、小红书、B 站、知乎、X 等，遵守各版规、注明非官方原创；
-- 突出技术点：33 工具全量接入、Real/Mock 双客户端降级、组合搜索配餐、券规则校验、交易安全护栏；
+- 突出技术点：35 工具全量接入、Real/Mock 双客户端降级、组合搜索配餐、券规则校验、交易安全护栏；
 - 认真回复 Issue / PR，鼓励别人加新人格、新餐品、新语言。
 
 绝不可以（官方明令，违者取消资格）：

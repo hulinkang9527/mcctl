@@ -168,7 +168,7 @@ class PartyStore:
 
 @dataclass
 class PartyDate:
-    """主题活动可预约日期（query-partystore-date）。"""
+    """主题活动可预约日期（query-party-store-date）。"""
 
     date: str
     store_code: str = ""
@@ -179,7 +179,7 @@ class PartyDate:
 
 @dataclass
 class PartySession:
-    """主题活动可预约场次（query-partystore-session）。
+    """主题活动可预约场次（query-party-store-session）。
 
     字段对齐官方返回：id / timeStart / timeEnd / partyMin / partyMax / price / leftNum。
     注意：官方示例中 ``price`` 的展示口径（分 / 每人元）随接口版本可能不同，

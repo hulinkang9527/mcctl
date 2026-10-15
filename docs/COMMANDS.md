@@ -136,7 +136,7 @@ mcctl party plan --city 上海 --people 8 --budget 600 --date-hint 2026-10-25 --
 ## 8. 连接与诊断
 
 ```bash
-mcctl tools                 # 列出当前连接的 MCP 工具（tools/list），真实模式显示官方 33 个
+mcctl tools                 # 列出当前连接的 MCP 工具（tools/list），真实模式显示官方 35 个
 mcctl config                # 查看当前模式与连接配置（Token 脱敏）
 ```
 

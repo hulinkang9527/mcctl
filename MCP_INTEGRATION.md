@@ -21,15 +21,15 @@
 ### 双客户端与自动降级
 
 - **RealMCPClient**（`mcp_client.py`）：真实 MCP 链路。配置了 `MCD_MCP_TOKEN` 即启用。
-- **MockMCPClient**（`mock_client.py`）：**离线演示客户端**，1:1 实现了官方全部 33 个工具的状态机（领券、算价、门槛凑单、下单、取消、抽奖、积分兑换、派对预约），数据为贴近真实的**非官方演示数据**。
+- **MockMCPClient**（`mock_client.py`）：**离线演示客户端**，1:1 实现了官方全部 35 个工具的状态机（领券、算价、门槛凑单、下单、取消、抽奖、积分兑换、派对预约），数据为贴近真实的**非官方演示数据**。
 - 未配置 Token、或健康检查失败（网络错误 / 401 / 429）时自动降级到 Mock，保证任何人 **clone 即可零配置体验**；配置 Token 后无缝切换真实数据。
 - 切换：`mcctl --live ...`（强制真实）、`mcctl --mock ...`（强制离线）、默认 `auto`。
 
 > ⚠️ 仓库中**不包含任何真实 Token / 密钥**；配置仅使用环境变量占位符 `${MCD_MCP_TOKEN}`，见 [`mcp-config.example.json`](mcp-config.example.json) 与 [`.env.example`](.env.example)。
 
-## 2. 使用到的 MCP Tool（全量 33 个）
+## 2. 使用到的 MCP Tool（全量 35 个）
 
-官方 MCP Server 当前开放的 **33 个工具全部被接入**，按业务域分组如下。
+官方 MCP Server 当前开放的 **35 个工具全部被接入**，按业务域分组如下。
 
 ### 2.1 时间 / 菜单 / 营养（决策基础）
 
@@ -196,10 +196,10 @@ query-party-store ──► 候选门店（含距离 / businessStatus）
 
 ## 4. 业务价值
 
-1. **把 33 个离散工具编排成"说人话"的场景**：开发者 / 普通用户不必理解 MCP 工具名，用 `whoami / decide / save / order / points / party` 等直觉命令即可完成复杂链路。
+1. **把 35 个离散工具编排成"说人话"的场景**：开发者 / 普通用户不必理解 MCP 工具名，用 `whoami / decide / save / order / points / party` 等直觉命令即可完成复杂链路。
 2. **真省钱、可解释**：所有优惠结论都由 `calculate-price` 现算，给出基线、用券、凑单三种到手价与节省百分比，拒绝"伪优惠"。
 3. **安全可控**：交易写操作全链路 dry-run + `--confirm` 二次确认 + 官方支付跳转，Token 仅存于本地环境变量。
-4. **零门槛可玩**：无 Token 也能用离线 Mock 完整体验全部 33 工具链路，配 Token 即切真实数据，利于开源传播与二次开发。
+4. **零门槛可玩**：无 Token 也能用离线 Mock 完整体验全部 35 工具链路，配 Token 即切真实数据，利于开源传播与二次开发。
 5. **可嵌入 Agent**：同时提供 CLI、Python SDK 与 Agent Skill（见 [`skill/SKILL.md`](skill/SKILL.md)），可装进 WorkBuddy / Cursor 等 MCP Client。
 
 ## 5. 错误码处理

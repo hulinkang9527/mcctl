@@ -394,7 +394,7 @@ _PARTY_DATES_BY_STORE = {
     "ST_JA": ["2026-10-18", "2026-10-19", "2026-10-25", "2026-10-26", "2026-11-01"],
     "ST_HP": ["2026-10-18", "2026-10-25", "2026-10-26"],
 }
-# (门店, 日期) → 场次：字段对齐官方 query-partystore-session
+# (门店, 日期) → 场次：字段对齐官方 query-party-store-session
 # price 为「每人价格（分）」，service 层 ÷100 归一化为元，与真实口径一致。
 _PARTY_SESSIONS_BY_STORE_DATE = {
     ("ST_LJZ", "2026-10-18"): [
@@ -484,6 +484,24 @@ async def _party_order_create(c: MockMCPClient, a: dict) -> Any:
                note="演示预约，不会真实扣款")
 
 
+async def _promotions(c: MockMCPClient, a: dict) -> Any:
+    """query-promotions：查询当前可参与/即将开始的促销活动（离线仿真）。"""
+    return _ok({"promotions": [
+        {"id": "PM_1024", "title": "1024 程序员节 · 买一送一", "period": "2026-10-20 ~ 2026-10-26",
+         "scope": ["BUR_DOUBLE_CHEESE", "BUR_FISH"], "note": "活动期间指定单品买一送一"},
+        {"id": "PM_MEAL", "title": "麦麦超值套餐立减 5 元", "period": "2026-10-01 ~ 2026-11-30",
+         "scope": ["meal"], "note": "部分套餐可叠加优惠券"},
+    ]})
+
+
+async def _survey_coupon(c: MockMCPClient, a: dict) -> Any:
+    """query-survey-coupon：查询问卷任务可领取的优惠券（离线仿真）。"""
+    return _ok({"surveys": [
+        {"id": "SV_TASTE", "title": "口味偏好小问卷", "reward": "中薯条兑换券", "status": "可参与"},
+        {"id": "SV_STORE", "title": "门店体验反馈问卷", "reward": "5 元满减券", "status": "可参与"},
+    ]})
+
+
 # 工具名 → 处理函数映射（覆盖麦当劳 MCP 当前开放的全部工具）
 _TOOL_HANDLERS = {
     "now-time-info": _now_time,
@@ -499,6 +517,8 @@ _TOOL_HANDLERS = {
     "available-coupons": _available_coupons,
     "auto-bind-coupons": _auto_bind,
     "query-my-coupons": _my_coupons,
+    "query-promotions": _promotions,
+    "query-survey-coupon": _survey_coupon,
     "calculate-price": _calculate_price,
     "create-order": _create_order,
     "cancel-order": _cancel_order,
@@ -516,7 +536,7 @@ _TOOL_HANDLERS = {
     "query-my-prizes": _my_prizes,
     "query-party-city": _party_city,
     "query-party-store": _party_store,
-    "query-partystore-date": _party_date,
-    "query-partystore-session": _party_session,
+    "query-party-store-date": _party_date,
+    "query-party-store-session": _party_session,
     "party-order-create": _party_order_create,
 }

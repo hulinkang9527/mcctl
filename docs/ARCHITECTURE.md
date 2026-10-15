@@ -21,7 +21,7 @@ flowdir TB
     end
     subgraph MCP 接入层
       REAL[mcp_client.py RealMCPClient\n官方 mcp SDK · Streamable HTTP]
-      MOCK[mock_client.py MockMCPClient\n33 工具状态机]
+      MOCK[mock_client.py MockMCPClient\n35 工具状态机]
     end
     DATA[(data/personas.json\nmock_data.py 演示数据)]
     MCD[(麦当劳官方 MCP\nhttps://mcp.mcd.cn · 33 tools)]
@@ -45,7 +45,7 @@ flowdir TB
 | `cli.py` | Typer 命令树、全局开关（`--mock/--live/--json/--token`）、中文餐品名解析、交易 `--confirm` 护栏、Rich 渲染调度 |
 | `config.py` | `Settings`：读取 `.env` / 环境变量，判定 `auto/live/mock` 模式；无 Token 自动 Mock |
 | `mcp_client.py` | `RealMCPClient`：官方 `mcp` SDK 的 `streamablehttp_client + ClientSession`，封装 `initialize / tools/list / tools/call`，解析 `CallToolResult`，健康检查与降级信号 |
-| `mock_client.py` | `MockMCPClient`：与官方同名的 33 个工具，内含领券、算价、门槛、配送费、下单、取消、抽奖、积分、派对的状态机 |
+| `mock_client.py` | `MockMCPClient`：与官方同名的 35 个工具，内含领券、算价、门槛、配送费、下单、取消、抽奖、积分、派对的状态机 |
 | `service.py` | `get_server` 工厂、`McD` 业务门面（把多工具编排成"配餐/省钱/下单/积分/派对"），以及对官方返回的容错解析（`parse_meal/parse_coupon/parse_store`） |
 | `models.py` | `Meal / Coupon / Store / PriceBreakdown / Order / Campaign / PointsAccount / MallProduct` 等 dataclass |
 | `mock_data.py` | 贴近真实的非官方演示数据：餐品+营养+价格、券、门店、地址、当月活动、积分、商城、抽奖概率 |

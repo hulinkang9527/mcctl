@@ -42,6 +42,39 @@ class RealMCPClient(McdServer):
             "Accept": "application/json, text/event-stream",
         }
 
+    @staticmethod
+    def _connect_factory() -> tuple[Any, bool]:
+        """探测当前 mcp SDK 的 Streamable HTTP 连接 API。
+
+        mcp SDK 近年多次改动连接入口，这里做三档兼容：
+        - 旧版（mcp<1.10）：``streamablehttp_client(url, headers=..., timeout=...)``
+        - 新版（mcp 1.10+）：改名 ``streamable_http_client``，鉴权头与超时改由
+          ``http_client``（httpx / httpx2 的 AsyncClient）传入；
+        - mcp 2.x：同上新名，但底层依赖 ``httpx2``。
+
+        返回 ``(factory, modern)``：``modern=False`` 表示走旧版直传参数签名，
+        ``modern=True`` 表示需先构造 http_client 再传入。
+        """
+        try:
+            from mcp.client.streamable_http import streamable_http_client as factory
+        except ImportError:
+            try:
+                from mcp.client.streamable_http import streamablehttp_client as factory
+            except ImportError as exc:
+                raise RuntimeError(NO_SDK_HINT) from exc
+            return factory, False
+        return factory, True
+
+    @staticmethod
+    def _new_http_client(headers: dict[str, str], timeout: float) -> Any:
+        """构造新版 SDK 需要的 http_client（mcp 2.x 用 httpx2，1.10+ 用 httpx）。"""
+        try:
+            import httpx2
+            return httpx2.AsyncClient(headers=headers, timeout=timeout)
+        except ImportError:
+            import httpx
+            return httpx.AsyncClient(headers=headers, timeout=timeout)
+
     async def _get_session(self) -> Any:
         """懒建立并复用同一个 MCP 会话（HTTP 建连 + initialize 只发生一次）。
 
@@ -53,16 +86,25 @@ class RealMCPClient(McdServer):
             return self._session
         try:
             from mcp import ClientSession
-            from mcp.client.streamable_http import streamablehttp_client
         except ImportError as exc:
             raise RuntimeError(NO_SDK_HINT) from exc
 
+        factory, modern = self._connect_factory()
         stack = AsyncExitStack()
         await stack.__aenter__()
         try:
-            read, write, _get_sid = await stack.enter_async_context(
-                streamablehttp_client(self.url, headers=self._headers(), timeout=self.timeout)
-            )
+            if modern:
+                http_client = self._new_http_client(self._headers(), self.timeout)
+                await stack.enter_async_context(http_client)
+                # 新版 SDK（mcp 1.10+ / 2.x）context 只返回 (read, write)；
+                # 旧版返回 (read, write, get_session_id)，由 else 分支处理。
+                read, write = await stack.enter_async_context(
+                    factory(self.url, http_client=http_client)
+                )
+            else:
+                read, write, _get_sid = await stack.enter_async_context(
+                    factory(self.url, headers=self._headers(), timeout=self.timeout)
+                )
             session = await stack.enter_async_context(ClientSession(read, write))
             await session.initialize()
         except Exception:

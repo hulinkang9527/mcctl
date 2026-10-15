@@ -8,14 +8,16 @@ def _run(coro):
     return asyncio.run(coro)
 
 
-def test_all_33_tools_implemented():
+def test_all_35_tools_implemented():
     client = MockMCPClient()
     tools = _run(client.tools())
-    assert len(tools) == 33
+    assert len(tools) == 35
     # 关键业务工具齐全
     for name in ["list-nutrition-foods", "calculate-price", "create-order", "cancel-order",
                  "auto-bind-coupons", "campaign-calendar", "query-my-account",
-                 "mall-create-order", "draw-lottery", "party-order-create", "now-time-info"]:
+                 "mall-create-order", "draw-lottery", "party-order-create", "now-time-info",
+                 "query-promotions", "query-survey-coupon",
+                 "query-party-store-date", "query-party-store-session"]:
         assert name in tools
 
 
