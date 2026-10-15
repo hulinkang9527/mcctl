@@ -27,7 +27,7 @@ mcctl demo                  # 一键串演完整剧情（适合第一次体验 /
 
 ```bash
 mcctl personas                 # 列出 8 型麦麦人格
-mcctl whoami                   # 交互式 6 题，鉴定人格并生成麦籍卡
+mcctl whoami                   # 交互式 8 题（终局题四选一），鉴定人格并生成麦籍卡
 mcctl whoami --random          # 随机一型（群聊 / 演示）
 mcctl whoami --persona FITA    # 直接指定一型查看麦籍卡
 mcctl whoami --share           # 输出可分享文案

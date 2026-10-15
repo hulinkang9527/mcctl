@@ -36,7 +36,7 @@ license: MIT
 ### 1）麦麦人格测试（强社交入口，优先用于"不知道吃什么"）
 
 ```bash
-mcctl whoami            # 交互式 6 道 a/b 题，得出 8 型人格之一
+mcctl whoami            # 交互式 8 题（前 7 题 a/b + 终局四选一），得出 8 型人格之一
 mcctl whoami --random   # 随机一型（演示/群聊用）
 mcctl personas          # 查看全部 8 型
 ```

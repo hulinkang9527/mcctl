@@ -157,7 +157,8 @@ def render_account(p: dict[str, Any], products: list[dict[str, Any]] | None = No
 
 
 def persona_panel(persona: dict[str, Any], scores: dict[str, int] | None = None,
-                  margin: int | None = None) -> Panel:
+                  margin: int | None = None, runner_up: str | None = None,
+                  explanation: dict[str, Any] | None = None) -> Panel:
     c1, c2 = persona.get("color", [MCD_RED, MCD_GOLD])
     body = Text()
     body.append(f"{persona['emoji']} {persona['name']}（{persona['code']}）\n", style=f"bold {c1}")
@@ -167,7 +168,18 @@ def persona_panel(persona: dict[str, Any], scores: dict[str, int] | None = None,
     body.append(f"人格标签：{' / '.join(persona.get('traits', []))}\n")
     body.append(f"幸运暗号：{persona.get('lucky_code','')}\n", style="dim")
     if margin is not None:
-        body.append(f"鉴定置信度：领先第二名 {margin} 分\n", style="dim")
+        lead = "第二候选人格" if (runner_up and margin == 0) else "第二名"
+        body.append(f"鉴定置信度：领先{lead} {margin} 分\n", style="dim")
+    if runner_up:
+        body.append(f"第二候选人格：{runner_up}\n", style="dim")
+    if explanation:
+        traits = explanation.get("traits") or []
+        if traits:
+            body.append("你的答案特点：" + "、".join(
+                f"{t['label']}（{t['count']}）" for t in traits) + "\n", style="dim")
+        for k in explanation.get("key_questions", []):
+            body.append(f"· 第{k['id']}题「{k['q']}」→ {k['choice'].upper()}：{k['text']}\n",
+                        style="dim")
     return Panel(body, title="🪪 你的麦麦人格（McPersona）", border_style=c1)
 
 

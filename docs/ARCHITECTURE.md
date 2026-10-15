@@ -49,12 +49,12 @@ flowdir TB
 | `service.py` | `get_server` 工厂、`McD` 业务门面（把多工具编排成"配餐/省钱/下单/积分/派对"），以及对官方返回的容错解析（`parse_meal/parse_coupon/parse_store`） |
 | `models.py` | `Meal / Coupon / Store / PriceBreakdown / Order / Campaign / PointsAccount / MallProduct` 等 dataclass |
 | `mock_data.py` | 贴近真实的非官方演示数据：餐品+营养+价格、券、门店、地址、当月活动、积分、商城、抽奖概率 |
-| `engines/persona.py` | 加载 `personas.json`，6 题计分、8 型结果、麦籍卡文案 |
+| `engines/persona.py` | 加载 `personas.json`，8 题计分（前 7 题二选一 + 终局四选一）、8 型结果、同分裁决与结果解释 |
 | `engines/diet.py` | 槽位枚举组合搜索；控卡 / 非控卡两套打分；热量、蛋白、预算、忌口、时段、人数、本命餐、标签约束 |
 | `engines/decide.py` | 人格权重 → 营养约束 → 配餐搜索 → 人格化理由 |
 | `engines/save.py` | 一键领券 → 基线价 → 逐券试算 → 凑单 / 免配送费比选 |
 | `ui.py` | Rich 横幅、表格、面板、订单 / 价格 / 账户渲染，麦当劳金 `#FFC72C` / 红 `#DA291C` / 绿 `#2E9E5B` |
-| `data/personas.json` | 8 型人格权重、本命餐、标签、配色、文案与 6 道测试题（网页与 CLI 共用同一套数据语义） |
+| `data/personas.json` | 8 型人格权重、本命餐、标签、配色、文案与 8 道测试题（网页与 CLI 共用同一套数据语义） |
 
 ## 3. 一次命令的数据流（以 `mcctl save` 为例）
 

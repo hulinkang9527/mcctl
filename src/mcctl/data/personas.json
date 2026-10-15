@@ -341,14 +341,16 @@
         "score": {
           "BIGS": 2,
           "EARL": 1
-        }
+        },
+        "dim": "decisive"
       },
       "b": {
         "text": "研究菜单很久，来回对比（探索）",
         "score": {
           "SPCY": 2,
           "SWEET": 1
-        }
+        },
+        "dim": "explore"
       }
     },
     {
@@ -358,15 +360,17 @@
         "text": "直接下单，省时间（效率）",
         "score": {
           "NITE": 2,
-          "BIGS": 1
-        }
+          "EARL": 1
+        },
+        "dim": "efficiency"
       },
       "b": {
         "text": "先把优惠券全部研究一遍（省钱）",
         "score": {
           "LOYT": 2,
           "FITA": 1
-        }
+        },
+        "dim": "saving"
       }
     },
     {
@@ -376,15 +380,17 @@
         "text": "固定搭配，次次都差不多（稳定）",
         "score": {
           "EARL": 2,
-          "BIGS": 1
-        }
+          "FITA": 1
+        },
+        "dim": "classic"
       },
       "b": {
         "text": "每次都试新组合（尝鲜）",
         "score": {
           "SWEET": 2,
           "SPCY": 1
-        }
+        },
+        "dim": "novelty"
       }
     },
     {
@@ -395,14 +401,16 @@
         "score": {
           "SQUAD": 2,
           "LOYT": 1
-        }
+        },
+        "dim": "social"
       },
       "b": {
         "text": "跟着大家选，吃啥都行（跟随）",
         "score": {
           "FITA": 2,
           "SWEET": 1
-        }
+        },
+        "dim": "easygoing"
       }
     },
     {
@@ -413,14 +421,16 @@
         "score": {
           "SPCY": 2,
           "SQUAD": 1
-        }
+        },
+        "dim": "adventurous"
       },
       "b": {
         "text": "继续买熟悉的，稳妥（稳妥）",
         "score": {
-          "FITA": 2,
-          "BIGS": 1
-        }
+          "BIGS": 2,
+          "FITA": 1
+        },
+        "dim": "steady"
       }
     },
     {
@@ -429,16 +439,18 @@
       "a": {
         "text": "吃得满足、分量够、开心（满足）",
         "score": {
-          "BIGS": 2,
-          "SWEET": 1
-        }
+          "SWEET": 2,
+          "SQUAD": 1
+        },
+        "dim": "indulgence"
       },
       "b": {
         "text": "每一块钱都花得划算（价值）",
         "score": {
           "LOYT": 2,
-          "SQUAD": 1
-        }
+          "NITE": 1
+        },
+        "dim": "value"
       }
     },
     {
@@ -449,14 +461,16 @@
         "score": {
           "EARL": 2,
           "BIGS": 1
-        }
+        },
+        "dim": "loyal"
       },
       "b": {
         "text": "没有，喜欢不断更换（变化）",
         "score": {
           "NITE": 2,
           "SQUAD": 1
-        }
+        },
+        "dim": "variety"
       }
     },
     {
@@ -467,25 +481,29 @@
         "text": "极致省钱（券王结局）",
         "score": {
           "LOYT": 1
-        }
+        },
+        "dim": "saving"
       },
       "b": {
         "text": "快乐尝鲜（新品结局）",
         "score": {
           "SPCY": 1
-        }
+        },
+        "dim": "novelty"
       },
       "c": {
         "text": "稳定满足（经典结局）",
         "score": {
           "BIGS": 1
-        }
+        },
+        "dim": "classic"
       },
       "d": {
         "text": "朋友全员满意（团长结局）",
         "score": {
           "SQUAD": 1
-        }
+        },
+        "dim": "social"
       }
     }
   ]

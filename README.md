@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <a href="https://hulinkang9527.github.io/mcctl/"><img alt="Play" src="https://img.shields.io/badge/▶%20%E6%89%8B%E6%9C%BA%E9%9B%B6%E5%AE%89%E8%A3%85-30%E7%A7%92%E6%B5%8B%E9%BA%A6%E9%97%A8%E4%BA%BA%E6%A0%BC-DA291C?style=for-the-badge"></a>
+  <a href="https://hulinkang9527.github.io/mcctl/"><img alt="Play" src="https://img.shields.io/badge/%E2%96%B6%20%E6%89%8B%E6%9C%BA%E9%9B%B6%E5%AE%89%E8%A3%85-8%E9%A2%98%E6%B5%8B%E9%BA%A6%E9%97%A8%E4%BA%BA%E6%A0%BC-DA291C?style=for-the-badge"></a>
   <a href="https://github.com/hulinkang9527/mcctl/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/hulinkang9527/mcctl/actions/workflows/ci.yml/badge.svg"></a>
   <a href="https://github.com/hulinkang9527/mcctl/stargazers"><img alt="GitHub Stars" src="https://img.shields.io/github/stars/hulinkang9527/mcctl?style=social&label=Star"></a>
 </p>
@@ -24,7 +24,7 @@
 </p>
 
 <p align="center">
-  <img src="./docs/assets/playground.gif" alt="mcctl 网页 Playground：6 题测人格，生成可分享麦籍卡" width="760" />
+  <img src="./docs/assets/playground.gif" alt="mcctl 网页 Playground：8 题测人格，生成可分享麦籍卡与好友匹配度" width="680" />
 </p>
 
 ---
@@ -35,7 +35,7 @@
 
 ## ✨ 亮点
 
-- 🃏 **麦麦人格测试**：6 道题测出 8 型 McPersona，生成可下载、可分享的像素风**麦籍卡**；人格是一套可计算的营养 / 口味权重，直接驱动配餐。
+- 🃏 **麦麦人格测试**：**8 题麦门人格测试**（前 7 题二选一 + 第 8 题终局四选一）测出 8 型 McPersona，生成可下载、可分享的像素风**麦籍卡**；人格是一套可计算的营养 / 口味权重，直接驱动配餐。
 - 💸 **真·省钱引擎**：一键领券 → 逐券试算 → 智能凑单，给你"基线 → 优惠 → 实付"和节省百分比，**拒绝伪优惠**。
 - 🛒 **安全下单闭环**：到店 / 外送全链路，所有交易默认**演练**，必须 `--confirm`，真实环境跳转官方支付、**不自动扣款**。
 - 🎉 **麦麦派对策划师（主打）**：`mcctl party plan` 把「城市 → 门店 → 日期 → 场次」做成约束求解——人数 / 预算 / 期望日期 / 名额硬约束卡死，输出 Top3 方案，`--confirm` 一键预约。
@@ -43,14 +43,17 @@
 
 ## 🚀 快速开始
 
-**方式一（零安装 · 手机点开即玩）**：打开 [**网页 Playground**](https://hulinkang9527.github.io/mcctl/)（手机也能玩）：6 题测人格 → 命定套餐 → 下载 / 分享麦籍卡。
+**方式一（零安装 · 手机点开即玩）**：打开 [**网页 Playground**](https://hulinkang9527.github.io/mcctl/)（手机也能玩）：8 题测人格 → 命定套餐 → 下载 / 分享麦籍卡。
+
+> 网页 Playground 为**离线演示**（纯静态、内置示例菜单与价格），用于展示人格测试与配餐逻辑；
+> 真实 MCP 工具调用请在 CLI 实时模式下验证（方式二 / 方式四）。
 
 **方式二（PyPI · 一行命令体验）**：
 
 ```bash
 pip install mcd-mcctl      # Python 包名为 mcd-mcctl，命令行入口仍为 mcctl
 mcctl demo                 # 一键串演：人格→配餐→省钱→下单演练→积分
-mcctl whoami               # 6 题测麦麦人格
+mcctl whoami               # 8 题测麦麦人格
 mcctl decide -p FITA       # 板烧修行者的命定套餐
 ```
 

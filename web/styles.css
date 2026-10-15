@@ -525,3 +525,117 @@ body {
 .pcard__per b { color: var(--mcd-red); }
 .pcard__reasons { display: flex; flex-direction: column; gap: 4px; }
 .pcard__reasons span { font-size: 0.88rem; color: #2c5d3a; }
+
+/* ============================================================
+   结果页：人格名 / 四字代号 / 标志性文案 更醒目
+   ============================================================ */
+.result__badge {
+  font-size: 1.15rem;
+  letter-spacing: 4px;
+  padding: 0.35rem 1rem;
+  border: 3px solid var(--mcd-yellow);
+  box-shadow: 3px 3px 0 var(--mcd-yellow);
+}
+.result__name {
+  font-size: 2.5rem;
+  line-height: 1.15;
+  font-weight: 800;
+  color: var(--mcd-dark);
+}
+.result__title { font-size: 1rem; }
+.result__motto {
+  font-size: 1.12rem;
+  font-weight: 700;
+  color: var(--mcd-dark);
+  margin: 1rem 0;
+  padding: 0.8rem 1rem;
+  border-left-width: 8px;
+}
+
+/* 「为什么是它」解释区 */
+.whybox {
+  background: var(--mcd-cream);
+  border: 3px solid var(--mcd-dark);
+  box-shadow: var(--shadow);
+  padding: 1rem 1.1rem;
+  margin-top: 1rem;
+}
+.whybox .result__mealtitle { margin-top: 0; }
+.whybox__traits { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.7rem; }
+.whybox__traits .wtag {
+  background: #fff; border: 2px solid var(--mcd-dark);
+  padding: 0.15rem 0.6rem; font-size: 0.82rem; font-weight: 700;
+}
+.whybox__traits .wtag b { color: var(--mcd-red); }
+.whybox__keys { list-style: none; display: grid; gap: 0.35rem; }
+.whybox__keys li { font-size: 0.86rem; color: #5a4a3f; line-height: 1.5; }
+.whybox__keys .wkey {
+  display: inline-block; background: var(--mcd-dark); color: var(--mcd-yellow);
+  font-size: 0.72rem; font-weight: 800; padding: 0.05rem 0.45rem; margin-right: 0.45rem;
+}
+.whybox__keys li b { color: var(--mcd-red); }
+.whybox__tie { margin-top: 0.6rem; font-size: 0.82rem; color: #8a6410; }
+.whybox__disclaimer { margin-top: 0.6rem; font-size: 0.78rem; color: #8a7a6f; }
+
+/* 好友人格匹配度 */
+.matchbox {
+  background: #fff;
+  border: 3px solid var(--mcd-dark);
+  box-shadow: var(--shadow);
+  padding: 1rem 1.1rem;
+  margin-top: 1rem;
+}
+.matchbox .result__mealtitle { margin-top: 0; }
+.matchbox__row { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
+.matchbox__me { font-weight: 800; font-size: 1rem; }
+.matchbox__row select {
+  font-family: inherit; font-size: 0.9rem; padding: 6px 8px;
+  border: 2px solid var(--mcd-dark); background: var(--mcd-cream);
+}
+.matchbox__out { margin-top: 0.9rem; display: grid; gap: 0.55rem; }
+.matchbox__score { font-size: 1rem; }
+.matchbox__score b { font-size: 1.8rem; color: var(--mcd-red); line-height: 1; }
+.matchbox__tier {
+  background: var(--mcd-yellow); border: 2px solid var(--mcd-dark);
+  padding: 0.1rem 0.6rem; font-size: 0.8rem; font-weight: 800; margin-left: 0.4rem;
+}
+.matchbox__bar {
+  height: 14px; background: #efe6d8; border: 2px solid var(--mcd-dark); overflow: hidden;
+}
+.matchbox__fill {
+  height: 100%; background: repeating-linear-gradient(45deg, var(--mcd-red) 0 8px, #ff6a4d 8px 16px);
+  transition: width 0.5s ease;
+}
+.matchbox__verdict { font-size: 0.95rem; font-weight: 700; }
+.matchbox__share { font-size: 0.86rem; color: #5a4a3f; }
+.matchbox__cta { margin-top: 0.3rem; }
+
+/* 一键示例：数据来源说明条 */
+.demo__note {
+  margin: 0.4rem 0 0.7rem; padding: 0.6rem 0.85rem;
+  background: var(--mcd-cream); border-left: 5px solid var(--mcd-yellow);
+  font-size: 0.86rem; line-height: 1.6; color: #5a4a3f;
+}
+.terminal__note {
+  margin: 0; padding: 0.5rem 0.9rem;
+  background: #1c1410; color: #cfc4b8; font-size: 0.78rem;
+}
+.terminal__note code { color: var(--mcd-yellow); }
+
+/* 派对：无结果时的原因与建议 */
+.party-empty__title { font-size: 1.15rem; font-weight: 800; margin-bottom: 0.6rem; }
+.party-empty__list {
+  list-style: none; display: grid; gap: 0.3rem;
+  text-align: left; max-width: 520px; margin: 0 auto 0.7rem;
+}
+.party-empty__list li { font-size: 0.88rem; color: #6b5949; }
+.party-empty__hint { font-size: 0.9rem; margin-bottom: 0.5rem; }
+.party-empty__tip { font-size: 0.88rem; color: var(--mcd-red); font-weight: 700; }
+
+@media (max-width: 640px) {
+  .result__name { font-size: 1.9rem; }
+  .result__badge { font-size: 1rem; letter-spacing: 3px; }
+  .matchbox__score b { font-size: 1.5rem; }
+  .matchbox__row { gap: 0.45rem; }
+  .matchbox__row select { flex: 1 1 140px; }
+}

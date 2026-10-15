@@ -41,7 +41,7 @@ grep -rn "your-name\|<your-name>" .   # 期望：无输出（docs/SUBMISSION-GUI
 
 1. 仓库页 **Settings → Pages → Source 选 `main` 分支 / `/web` 目录 → Save**；
 2. 约 1 分钟后得到 `https://你的用户名.github.io/mcctl/`；
-3. 把这个链接放到 README 最顶部、社区发帖文案里，让人不点命令行也能 30 秒玩到并回流 Star。
+3. 把这个链接放到 README 最顶部、社区发帖文案里，让人不点命令行也能 8 题玩到并回流 Star。
 
 ## 第 4 步：按官方模板发报名 Issue
 

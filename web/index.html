@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>mcctl · 麦门的 kubectl — 8 题测出你是哪种麦门人</title>
-  <meta name="description" content="手机零安装：8 型麦麦人格 + 命定套餐 + 可分享麦籍卡。33 个麦当劳官方 MCP 工具编排成的命令行 mcctl。30 秒出结果，敢晒你的代号吗？" />
+  <meta name="description" content="手机零安装：8 型麦麦人格 + 命定套餐 + 可分享麦籍卡。33 个麦当劳官方 MCP 工具编排成的命令行 mcctl。8 题出结果，敢晒你的代号吗？" />
   <meta name="keywords" content="mcctl,麦门,麦当劳,MCP,人格测试,kubectl,麦麦人格,程序员节,麦籍卡" />
   <meta name="theme-color" content="#DA291C" />
 
@@ -12,7 +12,7 @@
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content="mcctl · 麦门的 kubectl" />
   <meta property="og:title" content="mcctl · 麦门的 kubectl｜8 题测出你是哪种麦门人" />
-  <meta property="og:description" content="手机零安装：8 型麦麦人格 + 命定套餐 + 可分享麦籍卡。33 个麦当劳官方 MCP 工具编排的命令行。30 秒出结果。" />
+  <meta property="og:description" content="手机零安装：8 型麦麦人格 + 命定套餐 + 可分享麦籍卡。33 个麦当劳官方 MCP 工具编排的命令行。8 题出结果。" />
   <meta property="og:image" content="https://hulinkang9527.github.io/mcctl/og-cover.png" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
@@ -21,7 +21,7 @@
   <meta property="og:locale" content="zh_CN" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="mcctl · 麦门的 kubectl｜8 题测出你是哪种麦门人" />
-  <meta name="twitter:description" content="30 秒测出你的麦门人格，生成可晒的麦籍卡。33 个麦当劳官方 MCP 工具编排的命令行。" />
+  <meta name="twitter:description" content="8 题测出你的麦门人格，生成可晒的麦籍卡。33 个麦当劳官方 MCP 工具编排的命令行。" />
   <meta name="twitter:image" content="https://hulinkang9527.github.io/mcctl/og-cover.png" />
 
   <link rel="canonical" href="https://hulinkang9527.github.io/mcctl/" />
@@ -72,7 +72,7 @@
     <h1 class="hero__title">麦门的 <span class="hl">kubectl</span></h1>
     <p class="hero__sub">
       在终端里用 <code>mcctl whoami</code> 认清你是哪种麦门人。<br />
-      <b>手机零安装，30 秒出结果</b>——测完能下载麦籍卡，扫码就能让朋友也测。
+      <b>手机零安装，8 题出结果</b>——测完能下载麦籍卡，扫码就能让朋友也测。
     </p>
     <div class="hero__cta">
       <button class="btn btn--primary btn--lg" id="startBtn">▶ 开始麦麦人格测试</button>
@@ -94,7 +94,11 @@
       </div>
     </div>
     <div class="demo__step">
-      <div class="demo__head"><span class="demo__num">2</span> 系统编排 33 个 MCP 工具后，推荐套餐</div>
+      <div class="demo__head"><span class="demo__num">2</span> 展示套餐推荐结果</div>
+      <p class="demo__note">
+        当前为<b>离线演示</b>，下面的套餐、价格与推荐理由均来自<b>预置示例数据</b>，用于展示筛选与算价逻辑，
+        <b>并非现场调用麦当劳 MCP 的结果</b>。真实 MCP 工具调用请在 CLI 实时模式下验证（见下方终端演示）。
+      </p>
       <table class="demo__table">
         <thead><tr><th>餐品</th><th>单价</th><th>热量</th><th>作用</th></tr></thead>
         <tbody>
@@ -108,7 +112,8 @@
       <div class="demo__subtotal">商品小计 ¥81（预算 ¥100 内，余 ¥19）</div>
     </div>
     <div class="demo__step">
-      <div class="demo__head"><span class="demo__num">3</span> 优惠对比（省钱引擎自动试算）</div>
+      <div class="demo__head"><span class="demo__num">3</span> 优惠对比</div>
+      <p class="demo__note">演示优惠规则与计算结果。<b>实时优惠是否可用，以官方 MCP 返回结果为准。</b></p>
       <div class="demo__compare">
         <div class="compare-col">无券基线<div class="compare-price">¥81</div></div>
         <div class="compare-arrow">→</div>
@@ -126,6 +131,7 @@
     </div>
     <div class="demo__cta">
       <button class="btn btn--primary btn--lg" id="demoStart">▶ 轮到我了，去测人格</button>
+      <a class="btn btn--dark btn--lg" id="demoTerminal" href="#terminalDemo">🖥️ 看真实终端演示（CLI 实时 MCP）</a>
       <span class="demo__tip">以上数字来自离线演示数据，真实结果以 CLI 实时 MCP 为准。</span>
     </div>
   </section>
@@ -153,13 +159,13 @@
   <!-- 派对策划师（招牌功能） -->
   <section class="party" id="party">
     <h2 class="sec__title">🎉 麦麦派对策划师</h2>
-    <p class="party__sub">告诉它人数、预算、要不要周末，自动在 23 个场次里筛出最优方案并排序，<b>不用你挨个翻门店</b>。</p>
+    <p class="party__sub">告诉它人数、预算、要不要周末，自动在全部 <b id="sessionTotal">22</b> 个场次里筛出最优方案并排序，<b>不用你挨个翻门店</b>。</p>
     <div class="party__form">
       <label class="party__field">👥 人数
         <input type="number" id="partyPeople" value="10" min="1" max="12" />
       </label>
-      <label class="party__field">💰 总预算 ¥
-        <input type="number" id="partyBudget" value="1000" min="0" step="50" />
+      <label class="party__field">💰 总预算 ¥（留空=不限）
+        <input type="number" id="partyBudget" value="1000" min="0" step="50" placeholder="不限" />
       </label>
       <label class="party__field party__field--check">
         <input type="checkbox" id="partyWeekend" /> 仅周末
@@ -206,6 +212,29 @@
           <h3 class="result__mealtitle">🎯 你的命定套餐</h3>
           <ul class="meallist" id="rMeals"></ul>
 
+          <!-- 为什么是它：答案特点 + 影响最大的两道题 -->
+          <div class="whybox hidden" id="whyBox">
+            <h3 class="result__mealtitle">🧩 为什么是它</h3>
+            <div class="whybox__traits" id="rWhyTraits"></div>
+            <ul class="whybox__keys" id="rWhyKeys"></ul>
+            <p class="whybox__tie hidden" id="rWhyTie"></p>
+            <p class="whybox__disclaimer">
+              这是<b>娱乐型偏好测试</b>，非心理学人格诊断；计分规则固定、可解释，同一组答案永远得到同一结果。
+            </p>
+          </div>
+
+          <!-- 好友人格匹配度（复用 pair 合餐逻辑） -->
+          <div class="matchbox hidden" id="matchBox">
+            <h3 class="result__mealtitle">💞 你和朋友的人格匹配度</h3>
+            <div class="matchbox__row">
+              <span class="matchbox__me" id="matchMe"></span>
+              <span class="play__x">×</span>
+              <select id="matchFriend"></select>
+              <button class="btn btn--primary btn--sm" id="matchGo">算一算</button>
+            </div>
+            <div class="matchbox__out" id="matchOut"></div>
+          </div>
+
           <h3 class="result__mealtitle">⌨️ 命定命令</h3>
           <pre class="codeblock" id="rCmd"></pre>
 
@@ -238,8 +267,9 @@
         <div class="feature"><div class="feature__ic">🎁</div><h3>mcctl points</h3><p>积分总览、商城兑换、抽奖（附理性提示）、活动日历、派对预约。</p></div>
         <div class="feature"><div class="feature__ic">🔌</div><h3>33 MCP Tools</h3><p>官方 MCP 全量工具真实接入；无 Token 也能离线 Mock 完整体验。</p></div>
       </div>
-      <div class="terminal" aria-label="终端演示">
+      <div class="terminal" id="terminalDemo" aria-label="真实终端演示">
         <div class="terminal__bar"><span></span><span></span><span></span><code class="terminal__title">mcctl demo</code></div>
+        <p class="terminal__note">⬆ 真实 CLI 演示：安装后连接麦当劳官方 MCP（<code>mcctl --live</code>）即可获得实时菜单与到手价。</p>
 <pre class="terminal__body">$ pip install mcd-mcctl
 $ mcctl whoami
 🪪 你是：板烧修行者（FITA）— 高蛋白苦行僧
@@ -281,6 +311,7 @@ $ mcctl save --cart "巨无霸:1,薯条(中):1,可口可乐(中):1"
 
   <div class="toast hidden" id="toast"></div>
   <script src="vendor/qrcode.js"></script>
+  <script src="persona-core.js"></script>
   <script src="app.js"></script>
   <script src="party.js"></script>
 </body>

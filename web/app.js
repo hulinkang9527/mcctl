@@ -15,92 +15,16 @@ function personaUrl(code) {
   return pageUrl() + "?p=" + code;
 }
 
-// ---- 命定套餐 code → 展示名 ----
-const MEALS = {
-  BUR_BIGMAC: ["🍔", "巨无霸"],
-  SIDE_FRIES_M: ["🍟", "薯条（中）"],
-  SIDE_FRIES_L: ["🍟", "薯条（大）"],
-  DRK_COLA_M: ["🥤", "可口可乐（中）"],
-  DRK_COLA_ZERO: ["🥤", "零度可乐（中）"],
-  BUR_BANSHAO: ["🍗", "板烧鸡腿堡"],
-  SIDE_APPLE: ["🍎", "苹果片"],
-  DRK_WATER: ["💧", "饮用纯净水"],
-  BUR_MALA_CHICKEN: ["🌶️", "麦辣鸡腿堡"],
-  SIDE_SPICY_WINGS: ["🍗", "麦辣鸡翅（2块）"],
-  DRK_ICED_TEA: ["🧊", "冰红茶（中）"],
-  DESS_MCFLURRY_OREO: ["🍦", "奥利奥麦旋风"],
-  DESS_PIE_PINEAPPLE: ["🥧", "菠萝派"],
-  DRK_ORANGE: ["🍊", "100% 橙汁"],
-  BP_SAUSAGE_EGG: ["🥪", "猪柳蛋麦满分"],
-  BP_HASHBROWN: ["🥔", "脆薯饼"],
-  BP_COFFEE: ["☕", "鲜煮咖啡"],
-  BUR_CRISPY_CHICKEN: ["🍗", "脆汁鸡鸡腿堡"],
-  SIDE_NUGGETS_10: ["🧆", "麦乐鸡（10块）"],
-  BUR_DOUBLE_CHEESE: ["🍔", "双层吉士汉堡"],
-};
+// 题库 / 人格数据 / 计分规则统一来自 persona-core.js（与后端 personas.json 同构）
+const { MEALS, PERSONAS, QUESTIONS, DIM_LABELS, optionsOf, randomAnswers, scoreAll } =
+  window.McPersona;
 
-// ---- 8 型人格 ----
-const PERSONAS = [
-  { code: "BIGS", emoji: "🍔", name: "巨无霸本霸", title: "麦门压舱石 · 双层牛肉执政官",
-    motto: "面包夹山河，一顿管八小时。", color: ["#DA291C", "#FFC72C"],
-    traits: ["经典派", "大份量", "决策果断"],
-    desc: "团队主心骨，相信经典永不出错，追求确定性与掌控感。",
-    cta: "mcctl decide -p BIGS", meal: ["BUR_BIGMAC", "SIDE_FRIES_M", "DRK_COLA_M"] },
-  { code: "FITA", emoji: "🥗", name: "板烧修行者", title: "高蛋白苦行僧 · 体脂率刺客",
-    motto: "板烧去酱，可乐换零，人生也要做减法。", color: ["#2E9E5B", "#DFF3E4"],
-    traits: ["控卡", "高蛋白", "极度自律"],
-    desc: "把身体当长期项目运营，进麦当劳也能精准锁定高蛋白低卡。",
-    cta: "mcctl diet --kcal 600", meal: ["BUR_BANSHAO", "SIDE_APPLE", "DRK_WATER"] },
-  { code: "SPCY", emoji: "🌶️", name: "麦辣亡命徒", title: "味蕾极限运动员 · 新品首批内测官",
-    motto: "不辣不欢，不新不点，平淡是原罪。", color: ["#E8531E", "#FFD23F"],
-    traits: ["嗜辣", "猎奇", "限定猎人"],
-    desc: "味蕾极限运动员，永远冲在新品和限定的第一线。",
-    cta: "mcctl decide -p SPCY", meal: ["BUR_MALA_CHICKEN", "SIDE_SPICY_WINGS", "DRK_ICED_TEA"] },
-  { code: "SWEET", emoji: "🍦", name: "麦旋风甜心", title: "快乐水本水 · 第二份半价永远的神",
-    motto: "正餐只是铺垫，甜品才是正文。", color: ["#B6508C", "#FFD9EC"],
-    traits: ["甜品脑", "仪式感", "快乐优先"],
-    desc: "为生活保留一块柔软的甜，麦旋风那一格永远留给快乐。",
-    cta: "mcctl decide -p SWEET", meal: ["DESS_MCFLURRY_OREO", "DESS_PIE_PINEAPPLE", "DRK_ORANGE"] },
-  { code: "EARL", emoji: "☕", name: "麦满分绅士", title: "清晨秩序守护者 · 吉士蛋麦满分爵士",
-    motto: "早起的人，才有资格优雅地咬下第一口麦满分。", color: ["#9A6B24", "#F3E2C0"],
-    traits: ["早餐党", "规律", "咖啡续命"],
-    desc: "秩序感从清晨开始，一份热乎的麦满分是你与世界体面的仪式。",
-    cta: "mcctl decide -p EARL --breakfast", meal: ["BP_SAUSAGE_EGG", "BP_HASHBROWN", "BP_COFFEE"] },
-  { code: "NITE", emoji: "🌙", name: "麦夜骑士", title: "深夜脆汁鸡召唤师 · 加班补给线",
-    motto: "天快亮了，而我的麦乐送刚到。", color: ["#3B366F", "#B7AEFF"],
-    traits: ["夜宵", "续命", "外送常客"],
-    desc: "城市入睡时你还醒着，深夜送达的麦当劳是 deadline 谈判的盟友。",
-    cta: "mcctl decide -p NITE", meal: ["BUR_CRISPY_CHICKEN", "SIDE_NUGGETS_10", "DRK_COLA_ZERO"] },
-  { code: "SQUAD", emoji: "🎉", name: "麦乐送团长", title: "拼单永远的发起人 · 第二份半价组织者",
-    motto: "一个人吃是快餐，一群人吃是麦门团建。", color: ["#006DB6", "#FFC72C"],
-    traits: ["社交核心", "拼单团长", "派对策划"],
-    desc: "群里那句『有人要拼麦当劳吗』的发起人，把一顿饭变成聚会。",
-    cta: "mcctl party --people 6", meal: ["BUR_BIGMAC", "BUR_MALA_CHICKEN", "SIDE_NUGGETS_10", "SIDE_FRIES_L", "DRK_COLA_M", "DRK_COLA_ZERO"] },
-  { code: "LOYT", emoji: "🪙", name: "麦门省钱主教", title: "麦麦省首席领券官 · 积分套利大祭司",
-    motto: "没有券的订单是不完整的，省到就是赚到。", color: ["#8A6410", "#FFE9A8"],
-    traits: ["券王", "积分精算", "极致性价比"],
-    desc: "把每次下单当作小型套利，到手价是你唯一的信仰。",
-    cta: "mcctl save", meal: ["BUR_DOUBLE_CHEESE", "SIDE_FRIES_M", "DRK_COLA_ZERO"] },
-];
-
-// ---- 8 道题（前 7 题二选一，第 8 题为四选一结局题，权重 1）----
-const QUESTIONS = [
-  { q: "你到店/打开点餐页后，通常是？", a: ["秒选熟悉套餐，不纠结（果断）", { BIGS: 2, EARL: 1 }], b: ["研究菜单很久，来回对比（探索）", { SPCY: 2, SWEET: 1 }] },
-  { q: "下单前，你会先研究优惠券吗？", a: ["直接下单，省时间（效率）", { NITE: 2, BIGS: 1 }], b: ["先把优惠券全部研究一遍（省钱）", { LOYT: 2, FITA: 1 }] },
-  { q: "你点餐更偏爱？", a: ["固定搭配，次次都差不多（稳定）", { EARL: 2, BIGS: 1 }], b: ["每次都试新组合（尝鲜）", { SWEET: 2, SPCY: 1 }] },
-  { q: "朋友聚餐时，你通常是？", a: ["拍板、算预算、张罗的人（主导）", { SQUAD: 2, LOYT: 1 }], b: ["跟着大家选，吃啥都行（跟随）", { FITA: 2, SWEET: 1 }] },
-  { q: "面对新品，你会？", a: ["立刻尝试，怕错过（冒险）", { SPCY: 2, SQUAD: 1 }], b: ["继续买熟悉的，稳妥", { FITA: 2, BIGS: 1 }] },
-  { q: "你更在意？", a: ["吃得满足、分量够、开心（满足）", { BIGS: 2, SWEET: 1 }], b: ["每一块钱都花得划算（价值）", { LOYT: 2, SQUAD: 1 }] },
-  { q: "你有固定的必点款吗？", a: ["有，认准了就一直点（忠诚）", { EARL: 2, BIGS: 1 }], b: ["没有，喜欢不断更换（变化）", { NITE: 2, SQUAD: 1 }] },
-  { q: "如果今天的麦门之旅只能选一个结局，你选？", final: true,
-    a: ["极致省钱（券王结局）", { LOYT: 1 }], b: ["快乐尝鲜（新品结局）", { SPCY: 1 }],
-    c: ["稳定满足（经典结局）", { BIGS: 1 }], d: ["朋友全员满意（团长结局）", { SQUAD: 1 }] },
-];
 
 // ---------- DOM ----------
 const $ = (id) => document.getElementById(id);
 const quizEl = $("quiz"), resultEl = $("result"), featuresEl = $("features");
 let answers = [];
+let lastResult = null;   // 最近一次完整作答的结果（用于匹配度模块）
 
 document.querySelectorAll("[id$='Star']").forEach((a) => (a.href = REPO_URL));
 $("starRail").href = REPO_URL;
@@ -125,7 +49,7 @@ function renderQuestion() {
     qEl.textContent = `${i + 1}. ${item.q}`;
     const letters = ["a", "b", "c", "d"].filter((k) => item[k]);
     optsEl.innerHTML = letters.map((k) =>
-      `<button class="opt" data-choice="${k}"><span class="opt__key">${k.toUpperCase()}</span><span class="opt__text">${item[k][0]}</span></button>`
+      `<button class="opt" data-choice="${k}"><span class="opt__key">${k.toUpperCase()}</span><span class="opt__text">${item[k].text}</span></button>`
     ).join("");
     $("qCount").textContent = `${i + 1} / ${QUESTIONS.length}`;
     $("progressBar").style.width = `${(i / QUESTIONS.length) * 100 + 8}%`;
@@ -142,10 +66,11 @@ function choose(choice) {
   const btn = document.querySelector(`.opt[data-choice="${choice}"]`);
   if (btn) {
     const r = btn.getBoundingClientRect();
-    popFx(r.left + r.width / 2, r.top + r.height / 2,
-      choice === "a" ? ["🍔", "🥤", "🍟"] : ["🌶️", "🍦", "☕"]);
+    const fx = { a: ["🍔", "🥤", "🍟"], b: ["🌶️", "🍦", "☕"],
+                 c: ["🍔", "🧀", "🥓"], d: ["🎉", "🍗", "🥤"] }[choice] || ["🍔"];
+    popFx(r.left + r.width / 2, r.top + r.height / 2, fx);
   }
-  answers.push(QUESTIONS[i][choice][1]);
+  answers.push(choice);
   if (answers.length < QUESTIONS.length) {
     renderQuestion();
   } else {
@@ -154,17 +79,75 @@ function choose(choice) {
 }
 
 function score() {
-  const tally = Object.fromEntries(PERSONAS.map((p) => [p.code, 0]));
-  answers.forEach((sc) => Object.entries(sc).forEach(([k, v]) => (tally[k] += v)));
-  let best = PERSONAS[0].code, max = -1;
-  for (const p of PERSONAS) { // 平局时保持 PERSONAS 顺序，与 Python max 行为一致
-    if (tally[p.code] > max) { max = tally[p.code]; best = p.code; }
-  }
-  return PERSONAS.find((p) => p.code === best);
+  // 计分与同分裁决统一走 persona-core（与 Python 引擎一致）
+  const r = scoreAll(answers);
+  r.explainLines = r.explainLines || [];
+  return r;
 }
 
 function finish() {
-  renderResult(score(), { mine: true });
+  const r = score();
+  lastResult = r;
+  renderResult(r.persona, { mine: true, result: r });
+}
+
+// ---------- 结果解释：答案特点 + 影响最大的两道题 ----------
+function renderWhy(r) {
+  const ex = r.explanation || {};
+  $("rWhyTraits").innerHTML = (ex.traits || [])
+    .map((t) => `<span class="wtag">${t.label} <b>${t.count}</b></span>`).join("");
+  $("rWhyKeys").innerHTML = (ex.keyQuestions || [])
+    .map((k) => `<li><span class="wkey">第 ${k.id} 题</span>「${k.q}」→ 你选 <b>${k.choice.toUpperCase()}</b>：${k.text}</li>`)
+    .join("");
+  const tie = $("rWhyTie");
+  if (r.tie && r.runnerUpPersona) {
+    tie.textContent = `你与 ${r.runnerUpPersona.emoji} ${r.runnerUpPersona.name}（${r.runnerUp}）同分，` +
+      `按${r.tieBrokenBy === "final" ? "终局题" : "图鉴顺序"}定夺。`;
+    tie.classList.remove("hidden");
+  } else {
+    tie.classList.add("hidden");
+  }
+  $("whyBox").classList.remove("hidden");
+}
+
+// ---------- 人格匹配度（复用 pair 合餐逻辑）----------
+const MATCH_TIER_LABEL = { soul: "天生一对", ally: "求同存异", contrast: "互补搭档" };
+
+function computeMatch(a, b) {
+  const overlap = a.meal.filter((c) => b.meal.includes(c));
+  const union = new Set(a.meal.concat(b.meal));
+  // 娱乐向确定性打分：重叠越多越合拍，重合度很低时算互补（保底不刺眼）
+  const base = overlap.length >= 2 ? 90 : overlap.length === 1 ? 76 : 58;
+  const score = Math.min(99, base + (hashStr(a.code + "::" + b.code) % 7));
+  const tier = overlap.length >= 2 ? "soul" : overlap.length === 1 ? "ally" : "contrast";
+  const verdict = pick(seededRng(hashStr("pair::" + a.code + "::" + b.code)), PAIR_VERDICT[tier]);
+  return { score, tier, verdict, overlap: overlap.length, union: union.size };
+}
+
+function renderMatch(me, friendCode) {
+  const sel = $("matchFriend");
+  if (sel && !sel.options.length) {
+    sel.innerHTML = PERSONAS.filter((p) => p.code !== me.code)
+      .map((p) => `<option value="${p.code}">${p.emoji} ${p.code} ${p.name}</option>`).join("");
+  }
+  const code = friendCode || (sel && sel.value) ||
+    (PERSONAS.find((p) => p.code !== me.code) || {}).code;
+  const friend = PERSONAS.find((p) => p.code === code);
+  if (!friend) return;
+  if (sel) sel.value = code;
+  $("matchMe").textContent = `${me.emoji} ${me.name}（${me.code}）`;
+
+  const m = computeMatch(me, friend);
+  const merged = [];
+  const seen = new Set();
+  me.meal.concat(friend.meal).forEach((c) => { if (!seen.has(c)) { seen.add(c); merged.push(c); } });
+  $("matchOut").innerHTML = `
+    <div class="matchbox__score">匹配度 <b>${m.score}%</b> <span class="matchbox__tier">${MATCH_TIER_LABEL[m.tier]}</span></div>
+    <div class="matchbox__bar"><div class="matchbox__fill" style="width:${m.score}%"></div></div>
+    <div class="matchbox__verdict">🎯 ${m.verdict}</div>
+    <div class="matchbox__share">一起点：${merged.slice(0, 4).map((c) => `${MEALS[c][0]}${MEALS[c][1]}`).join(" + ")}</div>
+    <div class="matchbox__cta"><a class="btn btn--ghost btn--sm" href="${personaUrl(friend.code)}">看看 TA 的麦籍卡 →</a></div>`;
+  $("matchBox").classList.remove("hidden");
 }
 
 // ---------- 结果渲染（自己测 / 好友深链 共用）----------
@@ -193,6 +176,17 @@ function renderResult(p, opts) {
     .join("");
   $("rCmd").textContent = `$ ${p.cta}`;
   $("hintCode").textContent = `${p.emoji} ${p.name} ${p.code}`;
+
+  // 「为什么是它」+ 好友匹配度：仅自己测完（有完整作答）时展示
+  const r = opts.result || null;
+  if (r) {
+    renderWhy(r);
+    renderMatch(p, $("matchFriend").value || null);
+  } else {
+    $("whyBox").classList.add("hidden");
+    $("matchBox").classList.add("hidden");
+  }
+
   drawCard(p);
   quizEl.classList.add("hidden");
   resultEl.classList.remove("hidden");
@@ -204,7 +198,7 @@ function renderResult(p, opts) {
     $("startBtn").textContent = "▶ 开始麦麦人格测试";
   } else {
     $("friendText").innerHTML =
-      `你的朋友是 <b>${p.emoji} ${p.name}（${p.code}）</b>——${p.motto}<br>你呢？30 秒测出你的麦门人格 🍔`;
+      `你的朋友是 <b>${p.emoji} ${p.name}（${p.code}）</b>——${p.motto}<br>你呢？8 题测出你的麦门人格 🍔`;
     fb.classList.remove("hidden");
     $("startBtn").textContent = "▶ 测我的麦门人格";
   }
@@ -377,7 +371,7 @@ function shareText(p) {
       `来测测你是 8 型麦门人的哪一派，还能一键算麦当劳最省到手价 👉 ${url}`;
   }
   return `我在【mcctl 麦门人格测试】里测出是「${p.emoji} ${p.name} ${p.code}」——${p.motto}\n` +
-    `你是哪种麦门人？30 秒测，敢晒代号吗 👉 ${url}`;
+    `你是哪种麦门人？8 题测，敢晒代号吗 👉 ${url}`;
 }
 
 async function share() {
@@ -474,6 +468,12 @@ $("againBtn").addEventListener("click", showQuiz);
 $("friendBtn").addEventListener("click", showQuiz);
 $("downloadBtn").addEventListener("click", downloadCard);
 $("shareBtn").addEventListener("click", share);
+$("matchGo").addEventListener("click", () => {
+  if (lastResult) renderMatch(lastResult.persona, $("matchFriend").value);
+});
+$("matchFriend").addEventListener("change", () => {
+  if (lastResult) renderMatch(lastResult.persona, $("matchFriend").value);
+});
 $("starRailX").addEventListener("click", (e) => {
   e.preventDefault(); e.stopPropagation();
   $("starRail").classList.add("hidden");

@@ -163,7 +163,7 @@ async def _intro(ctx: typer.Context) -> None:
     if not ctx.obj.json_out:
         ui.show_banner(mode)
         ui.console.print(
-            "[bold]30 秒上手[/bold]\n"
+            "[bold]8 题测人格 · 5 条命令上手[/bold]\n"
             "  1. mcctl whoami                 测一测你的麦麦人格，生成可分享麦籍卡\n"
             "  2. mcctl decide                 按人格 + 实时菜单给出命定套餐\n"
             "  3. mcctl diet --kcal 600        控卡/高蛋白配餐\n"
@@ -217,31 +217,41 @@ def whoami_cmd(
         ui.console.print(ui.persona_panel(p))
         return
 
+    qs = P.questions()
     answers: list[str] = []
     if from_answers:
-        answers = [c for c in from_answers.lower() if c in ("a", "b")]
+        answers = [c for c in from_answers.lower() if c in ("a", "b", "c", "d")]
     elif do_random or ctx.obj.json_out:
-        import random
-        answers = [random.choice(["a", "b"]) for _ in P.questions()]
+        answers = P.random_answers()
     else:
-        ui.console.print(ui.Panel.fit("[bold]🍔 麦麦人格快速鉴定[/bold]　凭直觉选 a 或 b（回车默认 a）",
-                                      border_style=ui.MCD_GOLD))
-        for q in P.questions():
+        ui.console.print(ui.Panel.fit(
+            f"[bold]🍔 麦麦人格快速鉴定[/bold]　共 {len(qs)} 题（终局题四选一），凭直觉选（回车默认 a）",
+            border_style=ui.MCD_GOLD))
+        for q in qs:
+            letters = P.choices_of(q)
             ui.console.print(f"\n[bold]{q['id']}. {q['q']}[/bold]")
-            ui.console.print(f"  [bold {ui.MCD_GOLD}]a[/] {q['a']['text']}")
-            ui.console.print(f"  [bold {ui.MCD_RED}]b[/] {q['b']['text']}")
-            choice = input("  选择(a/b，回车=a): ").strip().lower()
-            answers.append(choice if choice in ("a", "b") else "a")
+            for k in letters:
+                color = ui.MCD_GOLD if k in ("a", "c") else ui.MCD_RED
+                ui.console.print(f"  [bold {color}]{k}[/] {q[k]['text']}")
+            choice = input(f"  选择({'/'.join(letters)}，回车=a): ").strip().lower()
+            answers.append(choice if choice in letters else "a")
 
     result = P.score(answers)
     if ctx.obj.json_out:
         ui.print_json({"code": result.code, "persona": result.persona,
-                       "scores": result.scores, "margin": result.margin})
+                       "scores": result.scores, "margin": result.margin,
+                       "runner_up": result.runner_up, "tie": result.tie,
+                       "tie_broken_by": result.tie_broken_by,
+                       "explanation": result.explanation})
         return
     if share:
         ui.console.print(result.card_text())
     else:
-        ui.console.print(ui.persona_panel(result.persona, result.scores, result.margin))
+        ru = result.runner_up_persona
+        ui.console.print(ui.persona_panel(
+            result.persona, result.scores, result.margin,
+            runner_up=f"{ru['emoji']} {ru['name']}（{ru['code']}）" if ru else None,
+            explanation=result.explanation))
         ui.console.print("[dim]加 --share 输出可转发的纯文本麦籍卡；用 "
                          f"{result.persona['lucky_code']} 解锁你的命定套餐。[/dim]")
 
@@ -796,7 +806,8 @@ def demo_cmd(ctx: typer.Context):
         mcd, mode = await _make_mcd("mock")
         out = {"mode": mode}
         out["now"] = await mcd.now()
-        pr = P.score(["b", "a", "a", "a", "b", "b", "a", "a", "b", "a"])
+        # 8 题定长作答（终局题选 c），结果稳定为 BIGS，便于录屏复现
+        pr = P.score(["a", "b", "b", "b", "b", "b", "a", "c"])
         out["persona"] = {"code": pr.code, "name": pr.persona["name"], "motto": pr.persona["motto"]}
         decision = await engine_decide(mcd, persona_code=pr.code, people=2, budget=120)
         out["recommend"] = decision["plans"][0]
