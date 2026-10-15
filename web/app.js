@@ -479,8 +479,17 @@ $("matchGo").addEventListener("click", () => {
 $("matchFriend").addEventListener("change", () => {
   if (lastResult) renderMatch(lastResult.persona, $("matchFriend").value);
 });
+// 常驻求 Star 小条：首屏先不出现（避免遮挡 hero 的能力标签），滚动一段后再浮出；
+// 用户点 × 关闭后不再打扰
+let railDismissed = false;
+window.addEventListener("scroll", () => {
+  if (railDismissed) return;
+  const y = window.scrollY || document.documentElement.scrollTop || 0;
+  $("starRail").classList.toggle("hidden", y < 620);
+}, { passive: true });
 $("starRailX").addEventListener("click", (e) => {
   e.preventDefault(); e.stopPropagation();
+  railDismissed = true;
   $("starRail").classList.add("hidden");
 });
 $("quizOpts").addEventListener("click", (e) => {
