@@ -468,9 +468,101 @@ $("starRailX").addEventListener("click", (e) => {
 document.querySelectorAll(".opt").forEach((b) =>
   b.addEventListener("click", () => choose(b.dataset.choice)));
 
+// ---------- 麦门玩法：daily / roll / pair ----------
+const GOOD_LUCK = ["点经典不纠结","加一份小食","出门先领券","堂食趁热","和朋友拼分享装","板烧去酱","零度可乐配一切","凑满减再下单","外送准时点","麦乐鸡蘸两酱","加一份薯饼","得来速不停车"];
+const BAD_LUCK = ["空腹刷菜单","冲动加单","麦辣配甜饮","纠结超过三分钟","点超预算还嘴硬","薯条放凉","为满减硬凑不爱吃的","把麦乐鸡分给别人","可乐去冰","边剪视频边点餐"];
+const QUOTES = ["人生就像巨无霸，层次要够。","薯条要趁热，机会要趁早。","减肥从下一顿开始，这顿先吃完。","麦门不保佑纠结的人。","你点的不是套餐，是今天的确定性。","面包会有的，可乐也会有的。","选择困难的时候，就交给骰子。","今天的热量，是明天的蛋白质。","别问吃什么，问就是麦麦人格说了算。"];
+const PAIR_VERDICT = {
+  soul: ["天生一对，连口味都像。","你们共享的不是食物，是灵魂。","这俩人，直接上双份。"],
+  ally: ["有点像，但各有坚持——正好一人一半。","能吃到一起，也能让到一起。","口味有交集，分享装最合适。"],
+  contrast: ["完全不同，谁也不抢谁的。","一个要辣一个要甜，凑成一顿完整的。","正好各点各的，谁也不亏。"]
+};
+
+function hashStr(s) { let h = 0; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0; return Math.abs(h); }
+function seededRng(seed) { let s = seed % 233280; if (s <= 0) s += 233280; return () => { s = (s * 9301 + 49297) % 233280; return s / 233280; }; }
+function pick(rng, arr) { return arr[Math.floor(rng() * arr.length)]; }
+
+function mealCategory(code) {
+  if (code.startsWith("BUR_")) return "主食";
+  if (code.startsWith("SIDE_")) return "小食";
+  return "饮品";
+}
+
+function renderPlay(html) { $("playPanel").innerHTML = html; }
+
+function playDaily() {
+  const day = new Date().toISOString().slice(0, 10);
+  const rng = seededRng(hashStr("mcctl-daily::" + day));
+  const p = pick(rng, PERSONAS);
+  const good = pick(rng, GOOD_LUCK), bad = pick(rng, BAD_LUCK), quote = pick(rng, QUOTES);
+  const num = 1 + Math.floor(rng() * 99);
+  renderPlay(`
+    <div class="play-card" style="--pc:${p.color[0]}">
+      <div class="play-card__date">📅 ${day}</div>
+      <div class="play-card__persona">今日幸运人格：${p.emoji} ${p.name}（${p.code}）</div>
+      <div class="play-card__line"><span class="play-tag play-tag--good">宜</span> ${good}</div>
+      <div class="play-card__line"><span class="play-tag play-tag--bad">忌</span> ${bad}</div>
+      <div class="play-card__quote">「${quote}」</div>
+      <div class="play-card__num">幸运数字：<b>${num}</b></div>
+    </div>`);
+}
+
+function playRoll() {
+  const rng = seededRng((Date.now() % 233280) | 0);
+  const codes = Object.keys(MEALS);
+  const byCat = { "主食": [], "小食": [], "饮品": [] };
+  codes.forEach((c) => byCat[mealCategory(c)].push(c));
+  const main = pick(rng, byCat["主食"]), side = pick(rng, byCat["小食"]), drink = pick(rng, byCat["饮品"]);
+  const items = [["🍔", main], ["🍟", side], ["🥤", drink]];
+  const mood = pick(rng, ["今天这盲盒，香。","闭眼点的，往往最对。","骰子说你值得这一套。","这套配得离谱地合理。","不纠结，直接冲。"]);
+  renderPlay(`
+    <div class="play-card">
+      <div class="play-card__title">🎰 麦门盲盒</div>
+      ${items.map(([ic, c]) => `<div class="play-card__line">${ic} ${MEALS[c][1]}</div>`).join("")}
+      <div class="play-card__mood">🎲 ${mood}</div>
+    </div>`);
+}
+
+function playPair() {
+  const ca = $("pairA").value, cb = $("pairB").value;
+  if (!ca || !cb) { toast("先选两个人格代号"); return; }
+  const pa = PERSONAS.find((p) => p.code === ca), pb = PERSONAS.find((p) => p.code === cb);
+  const merged = [], seen = new Set();
+  pa.meal.concat(pb.meal).forEach((c) => { if (!seen.has(c)) { seen.add(c); merged.push(c); } });
+  const overlap = pa.meal.filter((c) => pb.meal.includes(c));
+  const tier = overlap.length >= 2 ? "soul" : overlap.length === 1 ? "ally" : "contrast";
+  const rng = seededRng(hashStr(pa.code + "::" + pb.code));
+  const verdict = pick(rng, PAIR_VERDICT[tier]);
+  renderPlay(`
+    <div class="play-card" style="--pc:${pa.color[0]}">
+      <div class="play-card__title">💑 ${pa.emoji} ${pa.name} × ${pb.emoji} ${pb.name}</div>
+      <div class="play-card__quote">🎯 ${verdict}</div>
+      ${merged.map((c) => `<div class="play-card__line">${MEALS[c][0]} ${MEALS[c][1]}${overlap.includes(c) ? " <span class='play-tag play-tag--good'>共享</span>" : ""}</div>`).join("")}
+    </div>`);
+}
+
+function initPlay() {
+  // 填充人格下拉
+  const opts = PERSONAS.map((p) => `<option value="${p.code}">${p.emoji} ${p.code} ${p.name}</option>`).join("");
+  $("pairA").innerHTML = opts; $("pairB").innerHTML = opts;
+  $("pairB").value = "FITA";
+  document.querySelectorAll(".play__tab").forEach((btn) =>
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".play__tab").forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+      const t = btn.dataset.play;
+      $("pairRow").classList.toggle("hidden", t !== "pair");
+      if (t === "daily") playDaily();
+      else if (t === "roll") playRoll();
+      else playPair();
+    }));
+  $("pairGo").addEventListener("click", playPair);
+}
+
 // ---------- 初始化：好友深链 ?p=CODE ----------
 (function init() {
   renderGallery();
+  initPlay();
   const code = (new URLSearchParams(location.search).get("p") || "").toUpperCase();
   const p = PERSONAS.find((x) => x.code === code);
   if (p) {
