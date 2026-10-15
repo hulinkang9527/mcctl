@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 # PyPI 上的 `mcctl` 已被无关的第三方项目占用，故发行包名用 mcd-mcctl；
 # Python 导入名与命令行入口仍为 mcctl（见 [project.scripts]）。
 name = "mcd-mcctl"
-version = "1.0.0"
+version = "1.1.0"
 description = "mcctl — 麦门的 kubectl：麦当劳中国 MCP 的命令行控制面与智能体 Skill（人格决策 / 控卡配餐 / 一键省钱 / 安全下单 / 积分派对）"
 readme = "README.md"
 requires-python = ">=3.10"
