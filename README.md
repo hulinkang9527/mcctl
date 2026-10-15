@@ -18,7 +18,7 @@
   <img alt="Python" src="https://img.shields.io/badge/Python-3.10%2B-blue?logo=python&logoColor=white">
   <img alt="MCP Tools" src="https://img.shields.io/badge/MCP%20Tools-33-DA291C">
   <img alt="CLI" src="https://img.shields.io/badge/CLI-Typer%20%2F%20Rich-FFC72C">
-  <img alt="Tests" src="https://img.shields.io/badge/tests-55%20passed-2E9E5B">
+  <img alt="Tests" src="https://img.shields.io/badge/tests-70%20passed-2E9E5B">
   <img alt="License" src="https://img.shields.io/badge/License-MIT-2E9E5B">
   <img alt="Unofficial" src="https://img.shields.io/badge/%E9%9D%9E%E5%AE%98%E6%96%B9-creative%20work-8A6410">
 </p>
@@ -117,7 +117,7 @@ mcctl demo
 
 | 命令 | 作用 |
 |---|---|
-| `mcctl whoami` | 麦麦人格测试 + 麦籍卡 |
+| `mcctl whoami` | 8 题麦麦人格测试 + 麦籍卡 |
 | `mcctl decide / diet / lunch` | 人格化 / 控卡配餐 |
 | `mcctl menu / stores / calendar` | 菜单营养 / 门店 / 活动 |
 | `mcctl coupons / save` | 领券 / 凑单 / 到手价 |
@@ -154,8 +154,15 @@ mcctl demo
 
 ```bash
 pip install -e ".[dev]"
-pytest                      # 人格 / 配餐 / 省钱 / 派对策划 / 33 工具状态机 / 字段容错
+pytest                      # 人格(512 种作答) / 配餐 / 省钱 / 派对策划 / 33 工具状态机 / 字段容错
 ```
+
+测试覆盖的两处要点：
+
+- **512 种作答全枚举**：8 题题库共 2⁷×4=512 种作答，逐一校验「8 型都能被测出」「分布不塌缩」「同分裁决稳定」；
+- **网页 ↔ Python 计分一致性（parity）**：网页端题库与计分规则抽在 `web/persona-core.js`，
+  Node 探针枚举同样 512 种作答与 Python 引擎逐条比对，任一侧改了权重而另一侧没跟上，CI 立刻失败。
+  本机无 Node 时该用例自动跳过，其余测试照常运行。
 
 ## 📮 参赛说明
 
