@@ -22,6 +22,7 @@ from rich.table import Table
 from mcctl import ui
 from mcctl.config import Settings
 from mcctl.engines import persona as P
+from mcctl.engines.fun import fortune, pair as pair_engine, roll as roll_engine
 from mcctl.engines.decide import decide as engine_decide
 from mcctl.engines.diet import MealConstraints, optimize_meal
 from mcctl.engines.party import PartyConstraints, plan_party
@@ -243,6 +244,80 @@ def whoami_cmd(
         ui.console.print(ui.persona_panel(result.persona, result.scores, result.margin))
         ui.console.print("[dim]加 --share 输出可转发的纯文本麦籍卡；用 "
                          f"{result.persona['lucky_code']} 解锁你的命定套餐。[/dim]")
+
+
+# --------------------------------------------------------------------------- 趣味玩法
+@app.command("daily")
+def daily_cmd(
+    ctx: typer.Context,
+    share: bool = typer.Option(False, "--share", help="输出便于转发的纯文本运势"),
+):
+    """今日麦门运势：每日一签，同一天同签。"""
+    data = fortune()
+    if ctx.obj.json_out:
+        ui.print_json({"date": data["date"], "persona": data["persona"]["code"],
+                       "persona_name": data["persona"]["name"], "good": data["good"],
+                       "bad": data["bad"], "quote": data["quote"],
+                       "lucky_number": data["lucky_number"], "lucky_code": data["lucky_code"]})
+        return
+    if share:
+        ui.console.print(ui.daily_share_text(data))
+    else:
+        ui.console.print(ui.daily_panel(data))
+
+
+@app.command("roll")
+def roll_cmd(
+    ctx: typer.Context,
+    share: bool = typer.Option(False, "--share", help="输出纯文本盲盒结果"),
+):
+    """盲盒点餐：随机抽一套主食+小食+饮品，专治选择困难。"""
+    async def go():
+        mcd, mode = await _make_mcd(_force_mode(ctx))
+        res = await roll_engine(mcd)
+        res["mode"] = mode
+        return res
+    res = _run(go())
+    if ctx.obj.json_out:
+        ui.print_json(res)
+        return
+    if share:
+        items = " + ".join(i["name"] for i in res["items"])
+        ui.console.print("\n".join([
+            "🎰 麦门盲盒", "------------------------------",
+            f"为你抽到：{items}",
+            f"合计 ¥{res['price']:.2f} / {res['kcal']:.0f} kcal",
+            res["mood"], "------------------------------",
+            "由 mcctl · 麦门控制面 抽取",
+        ]))
+    else:
+        ui.console.print(ui.roll_panel(res))
+
+
+@app.command("pair")
+def pair_cmd(
+    ctx: typer.Context,
+    persona_a: str = typer.Option(..., "--a", "-a", help="人格代号 A，如 BIGS"),
+    persona_b: str = typer.Option(..., "--b", "-b", help="人格代号 B，如 FITA"),
+    share: bool = typer.Option(False, "--share", help="输出纯文本合餐文案"),
+):
+    """人格合餐：两个麦麦人格一起点什么（双人分享装）。"""
+    async def go():
+        mcd, mode = await _make_mcd(_force_mode(ctx))
+        res = await pair_engine(mcd, persona_a, persona_b)
+        res["mode"] = mode
+        return res
+    try:
+        res = _run(go())
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc))
+    if ctx.obj.json_out:
+        ui.print_json(res)
+        return
+    if share:
+        ui.console.print(ui.pair_share_text(res))
+    else:
+        ui.console.print(ui.pair_panel(res))
 
 
 # --------------------------------------------------------------------------- 决策 / 配餐

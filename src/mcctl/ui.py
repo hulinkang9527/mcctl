@@ -185,3 +185,91 @@ def render_plan(plan: dict[str, Any], persona: dict[str, Any] | None = None) -> 
     t.add_row("钠", "", f"{nut['sodium_mg']:.0f} mg")
     reasons = Text("\n".join(f"✓ {r}" for r in plan.get("reasons", [])), style="dim")
     return Panel(Group(t, reasons), title="🎯 命定套餐", border_style=MCD_GOLD)
+
+
+# ---------------------------------------------------------------------------
+def daily_panel(data: dict[str, Any]) -> Panel:
+    """今日麦门运势卡片。"""
+    p = data["persona"]
+    body = Text()
+    body.append(f"📅 {data['date']}　", style="bold")
+    body.append(f"今日幸运人格：{p['emoji']} {p['name']}（{p['code']}）\n", style=f"bold {MCD_GOLD}")
+    body.append("\n")
+    body.append("宜：", style=MCD_GREEN)
+    body.append(f"{data['good']}\n")
+    body.append("忌：", style=MCD_RED)
+    body.append(f"{data['bad']}\n")
+    body.append(f"\n「{data['quote']}」\n", style="italic")
+    body.append(f"幸运数字：{data['lucky_number']}　", style="bold")
+    body.append(f"幸运暗号：{data['lucky_code']}\n", style="dim")
+    return Panel(body, title="🥠 今日麦门运势", border_style=MCD_GOLD)
+
+
+def daily_share_text(data: dict[str, Any]) -> str:
+    """可直接转发的纯文本麦门运势。"""
+    p = data["persona"]
+    return "\n".join([
+        "🥠 今日麦门运势 🥓",
+        "------------------------------",
+        f"📅 {data['date']}",
+        f"幸运人格：{p['emoji']} {p['name']}（{p['code']}）",
+        f"宜：{data['good']}",
+        f"忌：{data['bad']}",
+        f"「{data['quote']}」",
+        f"幸运数字：{data['lucky_number']}　幸运暗号：{data['lucky_code']}",
+        "------------------------------",
+        "由 mcctl · 麦门控制面 抽签",
+    ])
+
+
+def roll_panel(data: dict[str, Any]) -> Panel:
+    """盲盒点餐结果卡片。"""
+    items = data["items"]
+    t = Table(box=ROUNDED, show_header=False)
+    t.add_column("盲盒", no_wrap=True)
+    t.add_column(justify="right")
+    icons = ["🍔", "🍟", "🥤"]
+    for i, it in enumerate(items):
+        icon = icons[i] if i < len(icons) else "·"
+        t.add_row(f"{icon} {it['name']}", f"¥{it['price']:.0f}")
+    t.add_row("", "")
+    t.add_row("合计 / 热量", f"¥{data['price']:.2f} / {data['kcal']:.0f} kcal")
+    return Panel(Group(t, Text(f"🎲 {data['mood']}", style="italic")),
+                 title="🎰 麦门盲盒（roll）", border_style=MCD_RED)
+
+
+def pair_panel(data: dict[str, Any]) -> Panel:
+    """人格合餐卡片：双人分享装。"""
+    a, b = data["persona_a"], data["persona_b"]
+    head = Text()
+    head.append(f"💞 {a['emoji']} {a['name']}（{a['code']}）", style=f"bold {MCD_GOLD}")
+    head.append("  ×  ")
+    head.append(f"{b['emoji']} {b['name']}（{b['code']}）\n", style=f"bold {MCD_RED}")
+    head.append(f"🎯 {data['verdict']}", style="italic")
+
+    t = Table(box=ROUNDED, show_header=True, header_style=f"bold {MCD_GOLD}")
+    t.add_column("合餐"); t.add_column("数量", justify="right"); t.add_column("小计¥", justify="right")
+    for ln in data["lines"]:
+        t.add_row(ln["name"], f"×{ln['qty']}", f"{ln['line_total']:.2f}")
+    t.add_row("", "", "")
+    t.add_row("[bold]双人分享装合计[/]", "", f"[bold {MCD_RED}]¥{data['total_price']:.2f}[/]")
+    t.add_row("人均（2人）", f"¥{data['per_person_price']:.2f}", f"{data['per_person_kcal']:.0f} kcal")
+    if data["overlap"]:
+        t.add_row("共享本命餐", "、".join(data["overlap"]), "")
+    return Panel(Group(head, t), title="💑 麦门人格合餐", border_style=MCD_GOLD)
+
+
+def pair_share_text(data: dict[str, Any]) -> str:
+    """可转发的纯文本人格合餐。"""
+    a, b = data["persona_a"], data["persona_b"]
+    items = " + ".join(f"{ln['name']}×{ln['qty']}" for ln in data["lines"])
+    return "\n".join([
+        "💑 麦门人格合餐",
+        "------------------------------",
+        f"{a['emoji']} {a['name']}（{a['code']}） × {b['emoji']} {b['name']}（{b['code']}）",
+        data["verdict"],
+        f"合餐：{items}",
+        f"合计 ¥{data['total_price']:.2f}（人均 ¥{data['per_person_price']:.2f} / {data['per_person_kcal']:.0f} kcal）",
+        "------------------------------",
+        "由 mcctl · 麦门控制面 撮合",
+    ])
