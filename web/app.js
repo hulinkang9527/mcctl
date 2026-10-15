@@ -1,8 +1,19 @@
 /* mcctl Playground — 麦麦人格测试（纯静态，离线可跑；计分逻辑与 src/mcctl/engines/persona.py 一致） */
 
-// ⚠️ 发布前把这里改成你的公开仓库地址（README / 页面 Star 按钮会用到）
 const REPO_URL = "https://github.com/hulinkang9527/mcctl";
-const INSTALL_CMD = "pip install mcctl\nmcctl whoami     # 或一键演示：mcctl demo";
+const SITE_URL = "https://hulinkang9527.github.io/mcctl/";
+const INSTALL_CMD = "pip install mcd-mcctl   # 命令行入口仍是 mcctl\nmcctl whoami     # 或一键演示：mcctl demo";
+
+// 当前页面地址（用于分享与二维码）；本地 file:// 打开时回退到线上地址
+function pageUrl() {
+  if (location.protocol === "http:" || location.protocol === "https:") {
+    return location.origin + location.pathname;
+  }
+  return SITE_URL;
+}
+function personaUrl(code) {
+  return pageUrl() + "?p=" + code;
+}
 
 // ---- 命定套餐 code → 展示名 ----
 const MEALS = {
@@ -88,11 +99,13 @@ const quizEl = $("quiz"), resultEl = $("result"), featuresEl = $("features");
 let answers = [];
 
 document.querySelectorAll("[id$='Star']").forEach((a) => (a.href = REPO_URL));
+$("starRail").href = REPO_URL;
 $("installBlock").textContent = INSTALL_CMD;
 
 function showQuiz() {
   answers = [];
   resultEl.classList.add("hidden");
+  $("friendBar").classList.add("hidden");
   featuresEl.classList.remove("hidden");
   quizEl.classList.remove("hidden");
   renderQuestion();
@@ -145,7 +158,13 @@ function score() {
 }
 
 function finish() {
-  const p = score();
+  renderResult(score(), { mine: true });
+}
+
+// ---------- 结果渲染（自己测 / 好友深链 共用）----------
+function renderResult(p, opts) {
+  opts = opts || {};
+  const mine = !!opts.mine;
   $("rCode").textContent = p.code;
   $("rName").textContent = `${p.emoji} ${p.name}`;
   $("rTitle").textContent = p.title;
@@ -167,14 +186,28 @@ function finish() {
     .map((c) => `<li><span class="dot"></span><span style="font-size:1.2rem">${MEALS[c][0]}</span> ${MEALS[c][1]}</li>`)
     .join("");
   $("rCmd").textContent = `$ ${p.cta}`;
+  $("hintCode").textContent = `${p.emoji} ${p.name} ${p.code}`;
   drawCard(p);
   quizEl.classList.add("hidden");
   resultEl.classList.remove("hidden");
+
+  // 好友深链：展示横幅，引导测自己的
+  const fb = $("friendBar");
+  if (mine) {
+    fb.classList.add("hidden");
+    $("startBtn").textContent = "▶ 开始麦麦人格测试";
+  } else {
+    $("friendText").innerHTML =
+      `你的朋友是 <b>${p.emoji} ${p.name}（${p.code}）</b>——${p.motto}<br>你呢？30 秒测出你的麦门人格 🍔`;
+    fb.classList.remove("hidden");
+    $("startBtn").textContent = "▶ 测我的麦门人格";
+  }
+
   const panel = document.querySelector(".result__panel");
   panel.classList.remove("enter"); void panel.offsetWidth; panel.classList.add("enter");
   resultEl.scrollIntoView({ behavior: "smooth", block: "start" });
   window.__lastPersona = p;
-  toast(`🍟 麦门神谕：${ORACLES[Math.floor(Math.random() * ORACLES.length)]}`);
+  if (mine) toast(`🍟 麦门神谕：${ORACLES[Math.floor(Math.random() * ORACLES.length)]}`);
 }
 
 // ---------- Canvas 麦籍卡 ----------
@@ -196,6 +229,38 @@ function wrapText(ctx, text, x, y, maxW, lh) {
   }
   ctx.fillText(line, x, yy);
   return yy;
+}
+
+// 在卡片上画二维码（白底 + 静默区），失败时静默降级不影响出卡
+function drawQR(ctx, text, x, y, size) {
+  if (typeof qrcode !== "function") return;
+  try {
+    const qr = qrcode(0, "M");
+    qr.addData(text);
+    qr.make();
+    const n = qr.getModuleCount();
+    const quiet = 3;
+    const cell = size / (n + quiet * 2);
+    ctx.save();
+    ctx.fillStyle = "#FFFFFF";
+    roundRect(ctx, x - 10, y - 10, size + 20, size + 20, 12);
+    ctx.fill();
+    ctx.fillStyle = "#1c1410";
+    for (let r = 0; r < n; r++) {
+      for (let c = 0; c < n; c++) {
+        if (qr.isDark(r, c)) {
+          ctx.fillRect(
+            x + (c + quiet) * cell,
+            y + (r + quiet) * cell,
+            Math.ceil(cell), Math.ceil(cell)
+          );
+        }
+      }
+    }
+    ctx.restore();
+  } catch (e) {
+    /* 二维码不可用时仍保留文字网址，不阻断出卡 */
+  }
 }
 
 function drawCard(p) {
@@ -220,72 +285,73 @@ function drawCard(p) {
   ctx.textAlign = "left"; ctx.textBaseline = "alphabetic";
 
   // 浅色面板
-  ctx.fillStyle = c2; roundRect(ctx, 60, 130, W - 120, 1080, 18); ctx.fill();
-  ctx.strokeStyle = dark; ctx.lineWidth = 8; roundRect(ctx, 60, 130, W - 120, 1080, 18); ctx.stroke();
+  ctx.fillStyle = c2; roundRect(ctx, 60, 118, W - 120, 922, 18); ctx.fill();
+  ctx.strokeStyle = dark; ctx.lineWidth = 8; roundRect(ctx, 60, 118, W - 120, 922, 18); ctx.stroke();
 
   // 大 emoji
   ctx.font = "150px serif"; ctx.textAlign = "center";
-  ctx.fillText(p.emoji, W / 2, 300);
+  ctx.fillText(p.emoji, W / 2, 265);
 
   // 代号
   ctx.fillStyle = dark; ctx.font = "bold 120px monospace";
-  ctx.fillText(p.code, W / 2, 430);
+  ctx.fillText(p.code, W / 2, 390);
   // 中文名
   ctx.font = "bold 58px 'PingFang SC','Microsoft YaHei',sans-serif";
-  ctx.fillText(p.name, W / 2, 510);
+  ctx.fillText(p.name, W / 2, 468);
   // title
   ctx.fillStyle = "#DA291C"; ctx.font = "bold 32px 'PingFang SC','Microsoft YaHei',sans-serif";
-  ctx.fillText(p.title, W / 2, 566);
+  ctx.fillText(p.title, W / 2, 522);
 
   // motto 引用
-  ctx.fillStyle = "rgba(28,20,16,0.08)"; roundRect(ctx, 120, 600, W - 240, 110, 12); ctx.fill();
+  ctx.fillStyle = "rgba(28,20,16,0.08)"; roundRect(ctx, 110, 552, W - 220, 110, 12); ctx.fill();
   ctx.fillStyle = dark; ctx.font = "34px 'PingFang SC','Microsoft YaHei',sans-serif";
   ctx.textAlign = "left"; ctx.textBaseline = "alphabetic";
-  wrapText(ctx, `“${p.motto}”`, 150, 660, W - 300, 44);
+  wrapText(ctx, `“${p.motto}”`, 140, 610, W - 280, 44);
 
   // traits
   let tx = 200;
   ctx.font = "bold 30px 'PingFang SC','Microsoft YaHei',sans-serif";
   p.traits.forEach((t) => {
     const w = ctx.measureText(t).width + 56;
-    ctx.fillStyle = "#FFC72C"; roundRect(ctx, tx, 748, w, 58, 8); ctx.fill();
-    ctx.strokeStyle = dark; ctx.lineWidth = 3; roundRect(ctx, tx, 748, w, 58, 8); ctx.stroke();
+    ctx.fillStyle = "#FFC72C"; roundRect(ctx, tx, 696, w, 58, 8); ctx.fill();
+    ctx.strokeStyle = dark; ctx.lineWidth = 3; roundRect(ctx, tx, 696, w, 58, 8); ctx.stroke();
     ctx.fillStyle = dark; ctx.textAlign = "center"; ctx.textBaseline = "middle";
-    ctx.fillText(t, tx + w / 2, 778);
+    ctx.fillText(t, tx + w / 2, 726);
     ctx.textAlign = "left"; ctx.textBaseline = "alphabetic";
     tx += w + 28;
   });
 
-  // 命定套餐（条目多时自动收紧行高，避免与命令框重叠）
+  // 命定套餐（条目多时自动收紧行高，避免溢出面板）
   ctx.fillStyle = dark; ctx.font = "bold 36px 'PingFang SC','Microsoft YaHei',sans-serif";
   ctx.textAlign = "left";
-  ctx.fillText("🎯 命定套餐", 120, 880);
+  ctx.fillText("🎯 命定套餐", 120, 812);
   const many = p.meal.length > 4;
-  let my = many ? 950 : 940, lh = many ? 36 : 62;
+  let my = many ? 864 : 880, lh = many ? 34 : 62;
   p.meal.forEach((code) => {
     ctx.font = many ? "30px serif" : "40px serif"; ctx.fillText(MEALS[code][0], 145, my);
     ctx.font = (many ? "28px " : "34px ") + "'PingFang SC','Microsoft YaHei',sans-serif";
-    ctx.fillStyle = dark; ctx.fillText(MEALS[code][1], many ? 205 : 220, my);
+    ctx.fillStyle = dark; ctx.fillText(MEALS[code][1], many ? 200 : 220, my);
     my += lh;
   });
 
   // 幸运命令
-  ctx.fillStyle = dark; ctx.fillRect(120, 1150, W - 240, 70);
+  ctx.fillStyle = dark; ctx.fillRect(120, 1058, W - 240, 64);
   ctx.fillStyle = "#8be9a0"; ctx.font = "bold 30px monospace"; ctx.textBaseline = "middle";
-  ctx.fillText(`$ ${p.cta}`, 148, 1186);
+  ctx.fillText(`$ ${p.cta}`, 148, 1090);
   ctx.textBaseline = "alphabetic";
 
-  // 底部
-  ctx.fillStyle = dark; ctx.fillRect(0, H - 70, W, 70);
-  ctx.fillStyle = "#FFC72C"; ctx.font = "bold 26px monospace"; ctx.textBaseline = "middle";
-  ctx.fillText("mcctl whoami  ·  非官方创意演示  ·  open.mcd.cn/mcp", 48, H - 34);
-  // 右下像素徽标
-  ctx.fillStyle = "#FFC72C";
-  for (let i = 0; i < 8; i++)
-    for (let j = 0; j < 8; j++)
-      if ((i * 3 + j * 5 + p.code.charCodeAt(0)) % 3 === 0)
-        ctx.fillRect(W - 150 + i * 14, H - 58 + j * 6, 12, 4);
-  ctx.textBaseline = "alphabetic"; ctx.textAlign = "left";
+  // 底部深色条：二维码 + 扫码引导 + 项目网址
+  ctx.fillStyle = dark; ctx.fillRect(0, 1134, W, H - 1134);
+  const qrSize = 150;
+  drawQR(ctx, personaUrl(p.code), W - 56 - qrSize, 1168, qrSize);
+  ctx.textBaseline = "middle"; ctx.textAlign = "left";
+  ctx.fillStyle = "#FFC72C"; ctx.font = "bold 34px 'PingFang SC','Microsoft YaHei',sans-serif";
+  ctx.fillText("扫码测你是哪种麦门人 →", 48, 1206);
+  ctx.fillStyle = "#FFFFFF"; ctx.font = "26px monospace";
+  ctx.fillText("🍔 mcctl · 麦门的 kubectl", 48, 1253);
+  ctx.fillStyle = "#FFC72C"; ctx.font = "bold 26px monospace";
+  ctx.fillText("hulinkang9527.github.io/mcctl", 48, 1294);
+  ctx.textBaseline = "alphabetic";
 }
 
 // ---------- 下载 / 分享 ----------
@@ -296,23 +362,60 @@ function downloadCard() {
   a.click();
   toast("麦籍卡已下载，快晒到群里 🍔");
 }
+
+// 分享文案 A/B：社交型人格走「组队版」，其余走「挑战版」
+function shareText(p) {
+  const url = personaUrl(p.code);
+  if (p.code === "SQUAD" || p.code === "NITE") {
+    return `我是「${p.emoji} ${p.name}」——${p.motto}\n` +
+      `来测测你是 8 型麦门人的哪一派，还能一键算麦当劳最省到手价 👉 ${url}`;
+  }
+  return `我在【mcctl 麦门人格测试】里测出是「${p.emoji} ${p.name} ${p.code}」——${p.motto}\n` +
+    `你是哪种麦门人？30 秒测，敢晒代号吗 👉 ${url}`;
+}
+
 async function share() {
   const p = window.__lastPersona;
-  const text = `我在【mcctl 麦麦人格测试】里是「${p.emoji} ${p.name} ${p.code}」——${p.motto}\n来测测你是哪种麦门人，还能一键算麦当劳最省到手价 👉 `;
-  const url = location.href.split("#")[0];
+  const text = shareText(p);
+  const url = personaUrl(p.code);
   if (navigator.share) {
-    try { await navigator.share({ title: "mcctl 麦麦人格测试", text, url }); } catch (_) {}
-  } else if (navigator.clipboard) {
-    await navigator.clipboard.writeText(text + url);
-    toast("分享文案与链接已复制，去粘贴给朋友吧 📋");
+    try { await navigator.share({ title: "mcctl 麦门人格测试", text, url }); }
+    catch (e) { if (e && e.name !== "AbortError") copyShare(text); return; }
   } else {
-    toast("请手动复制地址栏链接分享");
+    copyShare(text);
   }
 }
+async function copyShare(text) {
+  if (navigator.clipboard) {
+    try { await navigator.clipboard.writeText(text); }
+    catch (e) { toast("复制失败，请手动复制地址栏链接"); return; }
+  } else {
+    toast("请手动复制地址栏链接分享"); return;
+  }
+  toast("已复制！发到群里喊一句「我是 " + $("hintCode").textContent +
+    "，评论区报你的人格代号，看谁和我一派」🃏", 4200);
+}
+
 let toastTimer;
-function toast(msg) {
+function toast(msg, ms) {
   const t = $("toast"); t.textContent = msg; t.classList.remove("hidden");
-  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.add("hidden"), 2400);
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.add("hidden"), ms || 2600);
+}
+
+// ---------- 8 型人格图鉴 ----------
+function renderGallery() {
+  $("galleryGrid").innerHTML = PERSONAS.map((p) => `
+    <button class="gcard" data-code="${p.code}" style="--gc:${p.color[0]};--gc2:${p.color[1]}">
+      <span class="gcard__emoji">${p.emoji}</span>
+      <span class="gcard__code">${p.code}</span>
+      <span class="gcard__name">${p.name}</span>
+      <span class="gcard__motto">${p.motto}</span>
+    </button>`).join("");
+  document.querySelectorAll(".gcard").forEach((b) =>
+    b.addEventListener("click", () => {
+      const p = PERSONAS.find((x) => x.code === b.dataset.code);
+      renderResult(p, { mine: false });
+    }));
 }
 
 // ---------- 趣味反馈 ----------
@@ -355,7 +458,24 @@ $("logoEaster").addEventListener("click", () => {
 $("startBtn").addEventListener("click", showQuiz);
 $("quizRestart").addEventListener("click", showQuiz);
 $("againBtn").addEventListener("click", showQuiz);
+$("friendBtn").addEventListener("click", showQuiz);
 $("downloadBtn").addEventListener("click", downloadCard);
 $("shareBtn").addEventListener("click", share);
+$("starRailX").addEventListener("click", (e) => {
+  e.preventDefault(); e.stopPropagation();
+  $("starRail").classList.add("hidden");
+});
 document.querySelectorAll(".opt").forEach((b) =>
   b.addEventListener("click", () => choose(b.dataset.choice)));
+
+// ---------- 初始化：好友深链 ?p=CODE ----------
+(function init() {
+  renderGallery();
+  const code = (new URLSearchParams(location.search).get("p") || "").toUpperCase();
+  const p = PERSONAS.find((x) => x.code === code);
+  if (p) {
+    renderResult(p, { mine: false });
+    // 保持地址栏干净，后续分享会重新生成带参数的链接
+    try { history.replaceState(null, "", location.pathname); } catch (e) {}
+  }
+})();

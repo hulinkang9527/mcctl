@@ -9,12 +9,21 @@
 </p>
 
 <p align="center">
+  <a href="https://hulinkang9527.github.io/mcctl/"><img alt="Play" src="https://img.shields.io/badge/▶%20%E6%89%8B%E6%9C%BA%E9%9B%B6%E5%AE%89%E8%A3%85-30%E7%A7%92%E6%B5%8B%E9%BA%A6%E9%97%A8%E4%BA%BA%E6%A0%BC-DA291C?style=for-the-badge"></a>
+  <a href="https://github.com/hulinkang9527/mcctl/stargazers"><img alt="GitHub Stars" src="https://img.shields.io/github/stars/hulinkang9527/mcctl?style=social&label=Star"></a>
+</p>
+
+<p align="center">
   <img alt="Python" src="https://img.shields.io/badge/Python-3.10%2B-blue?logo=python&logoColor=white">
   <img alt="MCP Tools" src="https://img.shields.io/badge/MCP%20Tools-33-DA291C">
   <img alt="CLI" src="https://img.shields.io/badge/CLI-Typer%20%2F%20Rich-FFC72C">
   <img alt="Tests" src="https://img.shields.io/badge/tests-41%20passed-2E9E5B">
   <img alt="License" src="https://img.shields.io/badge/License-MIT-2E9E5B">
   <img alt="Unofficial" src="https://img.shields.io/badge/%E9%9D%9E%E5%AE%98%E6%96%B9-creative%20work-8A6410">
+</p>
+
+<p align="center">
+  <img src="./docs/assets/demo.gif" alt="mcctl demo" width="680" />
 </p>
 
 ---
@@ -33,19 +42,28 @@
 
 ## 🚀 快速开始
 
-**方式一（零安装）**：打开 [**网页 Playground**](https://hulinkang9527.github.io/mcctl/)（手机也能玩）：6 题测人格 → 命定套餐 → 下载 / 分享麦籍卡。
+**方式一（零安装 · 手机点开即玩）**：打开 [**网页 Playground**](https://hulinkang9527.github.io/mcctl/)（手机也能玩）：6 题测人格 → 命定套餐 → 下载 / 分享麦籍卡。
 
-**方式二（命令行，离线演示）**：
+**方式二（PyPI · 一行命令体验）**：
+
+```bash
+pip install mcd-mcctl      # Python 包名为 mcd-mcctl，命令行入口仍为 mcctl
+mcctl demo                 # 一键串演：人格→配餐→省钱→下单演练→积分
+mcctl whoami               # 6 题测麦麦人格
+mcctl decide -p FITA       # 板烧修行者的命定套餐
+```
+
+> 说明：PyPI 上的 `mcctl` 包名已被无关的第三方项目占用，所以发行包名为 `mcd-mcctl`；安装后命令行入口仍是 `mcctl`，无需修改使用习惯。
+
+**方式三（从源码）**：
 
 ```bash
 git clone https://github.com/hulinkang9527/mcctl.git && cd mcctl
 pip install -e .
-mcctl demo            # 一键串演：人格→配餐→省钱→下单演练→积分
-mcctl whoami          # 6 题测麦麦人格
-mcctl decide -p FITA  # 板烧修行者的命定套餐
+mcctl demo
 ```
 
-**方式三（接入真实 MCP）**：到 <https://open.mcd.cn/mcp> 申请 Token，然后 `export MCD_MCP_TOKEN=你的Token && mcctl --live tools`。通用 MCP Client（WorkBuddy / Cursor / VS Code …）直接使用 [`mcp-config.example.json`](mcp-config.example.json)。
+**方式四（接入真实 MCP）**：到 <https://open.mcd.cn/mcp> 申请 Token，然后 `export MCD_MCP_TOKEN=你的Token && mcctl --live tools`。通用 MCP Client（WorkBuddy / Cursor / VS Code …）直接使用 [`mcp-config.example.json`](mcp-config.example.json)。
 
 ## 📺 终端演示
 
@@ -104,12 +122,14 @@ $ mcctl party plan --city 上海 --people 8 --budget 600 --date-hint 2026-10-25
 
 ```bash
 pip install -e ".[dev]"
-pytest                      # 41 个用例：人格 / 配餐 / 省钱 / 派对策划 / 33 工具状态机 / 字段容错
+pytest                      # 人格 / 配餐 / 省钱 / 派对策划 / 33 工具状态机 / 字段容错
 ```
 
 ## 📮 参赛说明
 
-参加 **2026 麦当劳程序员创意开发大赛（M-CODE / 1024 程序员节）**，官方合作伙伴为腾讯 WorkBuddy。欢迎 ⭐ Star、Fork、提 Issue。**请通过实际体验与正当社区分享支持项目，拒绝任何刷榜行为。**
+参加 **2026 麦当劳程序员创意开发大赛（M-CODE / 1024 程序员节）**，官方合作伙伴为腾讯 WorkBuddy。欢迎 ⭐ Star、Fork、提 Issue。**如果你也觉得好玩/有用，点个 Star 就是投票**，比赛以 GitHub Star 排名，谢谢麦门同门 🙏。
+
+> 本项目为麦当劳程序员创意开发大赛**非官方**开源创意作品，与麦当劳无隶属关系；请通过实际体验与正当社区分享支持项目，拒绝任何刷榜行为。
 
 ## 📄 许可证
 

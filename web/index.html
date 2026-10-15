@@ -3,8 +3,30 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>mcctl · 麦门的 kubectl — 麦麦人格测试</title>
-  <meta name="description" content="mcctl，麦门的 kubectl。6 道题测出你的麦麦人格（McPersona），领取命定套餐与可分享麦籍卡。基于麦当劳中国官方 MCP 的开源程序员节作品。" />
+  <title>mcctl · 麦门的 kubectl — 6 题测出你是哪种麦门人</title>
+  <meta name="description" content="手机零安装：8 型麦麦人格 + 命定套餐 + 可分享麦籍卡。33 个麦当劳官方 MCP 工具编排成的命令行 mcctl。30 秒出结果，敢晒你的代号吗？" />
+  <meta name="keywords" content="mcctl,麦门,麦当劳,MCP,人格测试,kubectl,麦麦人格,程序员节,麦籍卡" />
+  <meta name="theme-color" content="#DA291C" />
+
+  <!-- Open Graph / 社交分享 -->
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="mcctl · 麦门的 kubectl" />
+  <meta property="og:title" content="mcctl · 麦门的 kubectl｜6 题测出你是哪种麦门人" />
+  <meta property="og:description" content="手机零安装：8 型麦麦人格 + 命定套餐 + 可分享麦籍卡。33 个麦当劳官方 MCP 工具编排的命令行。30 秒出结果。" />
+  <meta property="og:image" content="https://hulinkang9527.github.io/mcctl/og-cover.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="mcctl 麦门人格测试 · 8 型麦麦人格" />
+  <meta property="og:url" content="https://hulinkang9527.github.io/mcctl/" />
+  <meta property="og:locale" content="zh_CN" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="mcctl · 麦门的 kubectl｜6 题测出你是哪种麦门人" />
+  <meta name="twitter:description" content="30 秒测出你的麦门人格，生成可晒的麦籍卡。33 个麦当劳官方 MCP 工具编排的命令行。" />
+  <meta name="twitter:image" content="https://hulinkang9527.github.io/mcctl/og-cover.png" />
+
+  <link rel="canonical" href="https://hulinkang9527.github.io/mcctl/" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍔</text></svg>" />
+  <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍔</text></svg>" />
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
@@ -34,7 +56,7 @@
     <h1 class="hero__title">麦门的 <span class="hl">kubectl</span></h1>
     <p class="hero__sub">
       在终端里用 <code>mcctl whoami</code> 认清你是哪种麦门人。<br />
-      33 个麦当劳官方 MCP 工具，编排成点单、省钱、控卡、积分的一套命令。
+      <b>手机零安装，30 秒出结果</b>——测完能下载麦籍卡，扫码就能让朋友也测。
     </p>
     <div class="hero__cta">
       <button class="btn btn--primary btn--lg" id="startBtn">▶ 开始麦麦人格测试</button>
@@ -67,6 +89,13 @@
 
     <!-- 结果区 -->
     <section class="result hidden" id="result">
+      <!-- 好友深链横幅 -->
+      <div class="friendbar hidden" id="friendBar">
+        <span class="friendbar__tag">好友的麦籍卡</span>
+        <p class="friendbar__text" id="friendText"></p>
+        <button class="btn btn--primary btn--lg" id="friendBtn">▶ 测我的麦门人格</button>
+      </div>
+
       <div class="result__grid">
         <div class="cardwrap">
           <canvas id="cardCanvas" width="1080" height="1350" aria-label="你的麦籍卡"></canvas>
@@ -86,13 +115,16 @@
           <pre class="codeblock" id="rCmd"></pre>
 
           <div class="result__actions">
+            <button class="btn btn--accent btn--lg btn--block" id="shareBtn">🔗 分享我的人格</button>
             <button class="btn btn--primary" id="downloadBtn">⬇️ 下载麦籍卡</button>
-            <button class="btn btn--accent" id="shareBtn">🔗 分享我的人格</button>
             <button class="btn btn--ghost" id="againBtn">↺ 再测一次</button>
           </div>
+          <p class="result__sharehint" id="shareHint">
+            分享后喊一句「我是 <b id="hintCode">CODE</b>，评论区报你的代号，看谁和我一派 🃏」
+          </p>
           <div class="result__star">
             <a class="btn btn--dark btn--lg btn--block" id="resultStar" href="#" target="_blank" rel="noopener">
-              ☆ 在 GitHub 给 mcctl 点 Star，解锁完整 CLI
+              ☆ 觉得好玩？给 mcctl 点个 Star，让它冲进程序员节榜单
             </a>
             <pre class="codeblock codeblock--install" id="installBlock"></pre>
           </div>
@@ -113,7 +145,8 @@
       </div>
       <div class="terminal" aria-label="终端演示">
         <div class="terminal__bar"><span></span><span></span><span></span><code class="terminal__title">mcctl demo</code></div>
-<pre class="terminal__body">$ mcctl whoami
+<pre class="terminal__body">$ pip install mcd-mcctl
+$ mcctl whoami
 🪪 你是：板烧修行者（FITA）— 高蛋白苦行僧
 $ mcctl decide -p FITA
 🥗 板烧鸡腿堡 + 杯装玉米粒 + 鲜煮咖啡
@@ -121,6 +154,16 @@ $ mcctl decide -p FITA
 $ mcctl save --cart "巨无霸:1,薯条(中):1,可口可乐(中):1"
    基线 ¥46.00 → 满40减10 → <span class="term-hl">实付 ¥36.00（省 21.7%）</span></pre>
       </div>
+    </section>
+
+    <!-- 8 型人格图鉴 -->
+    <section class="gallery" id="gallery">
+      <h2 class="sec__title">🃏 8 型麦门人图鉴 · 你集齐了吗</h2>
+      <p class="gallery__hint">
+        晒图带上 <b>#麦门人格测试</b> <b>#麦门的kubectl</b>，评论区报你的四字代号，看谁和你一派 👇
+      </p>
+      <div class="gallery__grid" id="galleryGrid"></div>
+      <p class="gallery__foot">点任意一张，直接看这型人格的结果与麦籍卡。</p>
     </section>
   </main>
 
@@ -134,7 +177,15 @@ $ mcctl save --cart "巨无霸:1,薯条(中):1,可口可乐(中):1"
     </p>
   </footer>
 
+  <!-- 常驻求 Star 小条 -->
+  <a class="starrail" id="starRail" href="#" target="_blank" rel="noopener">
+    <span class="starrail__ic">⭐</span>
+    <span class="starrail__txt">参赛中，求一颗 Star 冲榜</span>
+    <span class="starrail__x" id="starRailX" aria-label="关闭">×</span>
+  </a>
+
   <div class="toast hidden" id="toast"></div>
+  <script src="vendor/qrcode.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

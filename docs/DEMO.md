@@ -5,8 +5,13 @@
 ## 0. 准备
 
 ```bash
+# 方式 A：直接安装 PyPI 发行包
+pip install mcd-mcctl
+
+# 方式 B：从源码安装
 git clone <你的仓库地址> mcctl && cd mcctl
 pip install -e .
+
 mcctl intro          # 欢迎页
 ```
 

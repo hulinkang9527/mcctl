@@ -7,7 +7,9 @@
 ## 安装
 
 ```bash
-pip install -e .            # 或发布后：pip install mcctl
+pip install mcd-mcctl     # PyPI 发行包名（命令行入口仍为 mcctl）
+# 或从源码安装：
+pip install -e .
 mcctl intro                 # 欢迎页 / 快速上手
 mcctl demo                  # 一键串演完整剧情（适合第一次体验 / 录屏）
 ```
