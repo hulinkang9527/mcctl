@@ -263,6 +263,11 @@ body {
 }
 .gcard__name { font-weight: 700; font-size: 0.95rem; color: var(--mcd-dark); }
 .gcard__motto { font-size: 0.74rem; color: #5a4a3f; line-height: 1.45; }
+.gcard__cta {
+  margin-top: 0.35rem; font-family: ui-monospace, Consolas, monospace;
+  font-size: 0.68rem; color: #fff; background: var(--mcd-dark);
+  padding: 0.15rem 0.4rem; border-radius: 3px; word-break: break-all;
+}
 
 /* ---------- 常驻求 Star 小条 ---------- */
 .starrail {
@@ -525,6 +530,31 @@ body {
 .pcard__per b { color: var(--mcd-red); }
 .pcard__reasons { display: flex; flex-direction: column; gap: 4px; }
 .pcard__reasons span { font-size: 0.88rem; color: #2c5d3a; }
+
+/* ============================================================
+   空状态：未答题时的引导（避免首次进入误以为没加载出来）
+   ============================================================ */
+.emptystate {
+  background: var(--mcd-cream); border: 4px dashed var(--mcd-dark);
+  box-shadow: var(--shadow); padding: 2.2rem 1.6rem; text-align: center;
+  margin-bottom: 2rem;
+}
+.emptystate__emoji { font-size: 2.6rem; line-height: 1; }
+.emptystate__title { margin: 0.7rem 0 0.6rem; font-size: 1.6rem; font-weight: 800; }
+.emptystate__desc { font-size: 0.95rem; color: #5a4a3f; line-height: 1.7; max-width: 560px; margin: 0 auto 1.2rem; }
+.emptystate__cta { display: flex; gap: 0.7rem; justify-content: center; flex-wrap: wrap; }
+.emptystate__note { margin: 1.1rem 0 0; font-size: 0.8rem; color: #8a7a6f; }
+.emptystate__note code { background: #fff; border: 1px solid var(--mcd-dark); padding: 0 4px; }
+.features__note {
+  max-width: 720px; margin: -0.6rem auto 1.4rem; text-align: center;
+  font-size: 0.88rem; line-height: 1.7; color: #6b5949;
+}
+@media (max-width: 640px) {
+  .emptystate { padding: 1.6rem 1rem; }
+  .emptystate__title { font-size: 1.3rem; }
+  .emptystate__cta { flex-direction: column; }
+  .emptystate__cta .btn { width: 100%; }
+}
 
 /* ============================================================
    结果页：人格名 / 四字代号 / 标志性文案 更醒目

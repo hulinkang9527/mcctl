@@ -16,7 +16,7 @@
 
 <p align="center">
   <img alt="Python" src="https://img.shields.io/badge/Python-3.10%2B-blue?logo=python&logoColor=white">
-  <img alt="MCP Tools" src="https://img.shields.io/badge/MCP%20Tools-33-DA291C">
+  <img alt="CLI MCP Tools" src="https://img.shields.io/badge/CLI%20MCP%20Tools-33-DA291C">
   <img alt="CLI" src="https://img.shields.io/badge/CLI-Typer%20%2F%20Rich-FFC72C">
   <img alt="Tests" src="https://img.shields.io/badge/tests-70%20passed-2E9E5B">
   <img alt="License" src="https://img.shields.io/badge/License-MIT-2E9E5B">
@@ -25,12 +25,38 @@
 
 <p align="center">
   <img src="./docs/assets/playground.gif" alt="mcctl 网页 Playground：8 题测人格，生成可分享麦籍卡与好友匹配度" width="680" />
+  <br /><sub>⬆ 10 秒真实流程：8 题测人格 → 麦籍卡 → 命定套餐 → 好友匹配度（网页为<b>离线演示</b>，预置数据）</sub>
 </p>
 
 ---
 
-`mcctl` 把麦当劳中国官方 MCP 开放的 **33 个工具** 编排成一套程序员命令：人格测试、控卡配餐、一键领券凑单、安全下单、积分兑换、派对预约，还能作为 **Agent Skill** 装进 WorkBuddy / Cursor，或直接打开**网页 Playground** 玩。
+### 为什么用 mcctl，而不是又一个点餐网页？
 
+普通点餐页只把菜单搬上屏幕；`mcctl` 把**决策**做成可编程的：8 题测出的人格不是标签，而是一套**可计算的营养 / 口味 / 社交权重**，直接驱动配餐组合搜索、券后到手价精算、派对场次约束求解——全部能在终端复现，`--json` 可直接接管道与 Agent。
+
+<table>
+<tr>
+<td width="34%" align="center" valign="top">
+  <img src="./docs/assets/personas/mcctl-persona-FITA.png" alt="麦籍卡示例：板烧修行者 FITA" width="280" />
+  <br /><sub>测完生成的麦籍卡 · 可下载 / 可扫码传播</sub>
+</td>
+<td valign="top">
+  <b>▶ 在线体验（手机零安装）</b><br />
+  <a href="https://hulinkang9527.github.io/mcctl/">hulinkang9527.github.io/mcctl</a><br />
+  <sub>8 题出结果 · 可下载麦籍卡 · 可算好友匹配度（离线 Playground）</sub><br /><br />
+  <b>⚡ 一行装上就跑</b><br />
+  <code>pip install mcd-mcctl &amp;&amp; mcctl whoami</code><br /><br />
+  <b>🧭 一条命令串演全部能力</b><br />
+  <code>mcctl demo</code> — 人格 → 配餐 → 省钱 → 下单演练 → 积分
+</td>
+</tr>
+</table>
+
+`mcctl` 把麦当劳中国官方 MCP 开放的 **33 个工具**（CLI 已全量集成）编排成一套程序员命令：人格测试、控卡配餐、一键领券凑单、安全下单、积分兑换、派对预约，还能作为 **Agent Skill** 装进 WorkBuddy / Cursor。
+
+> **网页 vs CLI 的边界，先说清楚**：网页 Playground 是**离线演示**（纯静态、预置菜单与价格，不调用官方 MCP）；
+> 想要**实时菜单 / 库存 / 到手价**请用 CLI —— `mcctl --live`（需在 open.mcd.cn/mcp 申请 Token，连不上会自动降级并明确提示）。
+>
 > 程序员节快乐。`kubectl` 管你的集群，`mcctl` 管你的麦门。
 
 ## ✨ 亮点
@@ -39,7 +65,7 @@
 - 💸 **真·省钱引擎**：一键领券 → 逐券试算 → 智能凑单，给你"基线 → 优惠 → 实付"和节省百分比，**拒绝伪优惠**。
 - 🛒 **安全下单闭环**：到店 / 外送全链路，所有交易默认**演练**，必须 `--confirm`，真实环境跳转官方支付、**不自动扣款**。
 - 🎉 **麦麦派对策划师（主打）**：`mcctl party plan` 把「城市 → 门店 → 日期 → 场次」做成约束求解——人数 / 预算 / 期望日期 / 名额硬约束卡死，输出 Top3 方案，`--confirm` 一键预约。
-- 🔌 **33 个 MCP 工具全量接入**：真实 Client + 离线 Mock 自动降级，**clone 即零配置体验**，配 Token 切真实数据。四种形态：Python 包 + CLI、Agent Skill、网页 Playground、可复用 SDK。
+- 🔌 **CLI 已集成 33 个 MCP 工具**：真实 Client + 离线 Mock 自动降级，**clone 即零配置体验**，配 Token 切实时数据。四种形态：Python 包 + CLI、Agent Skill、**离线网页 Playground**、可复用 SDK。
 
 ## 🚀 快速开始
 

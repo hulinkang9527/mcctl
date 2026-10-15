@@ -38,6 +38,8 @@ async def get_server(settings: Settings) -> tuple[Any, str]:
         raise ConnectionError(
             "未配置 MCD_MCP_TOKEN。请先到 https://open.mcd.cn/mcp 申请 Token，"
             "然后 export MCD_MCP_TOKEN=你的Token；或去掉 --live 用离线演示模式体验。"
+            "（也可临时传：mcctl --token <你的Token> --live <命令> —— --token 是全局选项，"
+            "要写在子命令之前）"
         )
     live = RealMCPClient(settings.url, settings.token or "")
     ok = await live.health_check()
@@ -48,7 +50,8 @@ async def get_server(settings: Settings) -> tuple[Any, str]:
     # auto 模式连不上则降级；live 模式直接抛错
     if settings.mode.value == "live":
         raise ConnectionError(
-            "无法连接麦当劳 MCP（https://mcp.mcd.cn）。请检查 Token、网络后重试，"
+            "无法连接麦当劳 MCP（https://mcp.mcd.cn）——Token 无效、已过期或网络不可达都会走到这里。"
+            "请用 `mcctl config` 核对连接配置与 Token 脱敏值，然后重试；"
             "或使用 --mock 体验离线演示。"
         )
     return MockMCPClient(), "mock-fallback"

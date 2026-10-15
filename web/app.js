@@ -33,6 +33,7 @@ $("installBlock").textContent = INSTALL_CMD;
 function showQuiz() {
   answers = [];
   resultEl.classList.add("hidden");
+  $("emptyState").classList.add("hidden");
   $("friendBar").classList.add("hidden");
   featuresEl.classList.remove("hidden");
   quizEl.classList.remove("hidden");
@@ -189,6 +190,7 @@ function renderResult(p, opts) {
 
   drawCard(p);
   quizEl.classList.add("hidden");
+  $("emptyState").classList.add("hidden");
   resultEl.classList.remove("hidden");
 
   // 好友深链：展示横幅，引导测自己的
@@ -410,6 +412,7 @@ function renderGallery() {
       <span class="gcard__code">${p.code}</span>
       <span class="gcard__name">${p.name}</span>
       <span class="gcard__motto">${p.motto}</span>
+      <span class="gcard__cta">$ ${p.cta}</span>
     </button>`).join("");
   document.querySelectorAll(".gcard").forEach((b) =>
     b.addEventListener("click", () => {
@@ -456,12 +459,14 @@ $("logoEaster").addEventListener("click", () => {
 
 // ---------- 事件 ----------
 $("startBtn").addEventListener("click", showQuiz);
+$("emptyStart").addEventListener("click", showQuiz);
 function showDemo() {
   const sec = $("demoSec");
   sec.classList.remove("hidden");
   sec.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 $("demoBtn").addEventListener("click", showDemo);
+$("emptyDemo").addEventListener("click", showDemo);
 $("demoStart").addEventListener("click", () => { showQuiz(); });
 $("quizRestart").addEventListener("click", showQuiz);
 $("againBtn").addEventListener("click", showQuiz);
@@ -587,5 +592,8 @@ function initPlay() {
     renderResult(p, { mine: false });
     // 保持地址栏干净，后续分享会重新生成带参数的链接
     try { history.replaceState(null, "", location.pathname); } catch (e) {}
+  } else if (code) {
+    // 无效/过期的麦籍卡深链：留在空状态并说明，而不是留一片空白
+    toast("这个麦籍卡链接已失效，来测你自己的 🍔", 4200);
   }
 })();

@@ -80,7 +80,8 @@
       <a class="btn btn--dark btn--lg" id="heroStar" href="#" target="_blank" rel="noopener">☆ 给项目 Star</a>
     </div>
     <div class="hero__chips">
-      <span>🃏 8 型麦麦人格</span><span>🍱 命定套餐</span><span>💸 一键算到手价</span><span>🔌 33 MCP Tools</span>
+      <span>🃏 8 型麦麦人格</span><span>🍱 命定套餐</span><span>💸 一键算到手价</span>
+      <span>🖥️ CLI 集成 33 个 MCP 工具</span><span>📦 本页为离线 Playground · 预置数据</span>
     </div>
   </section>
 
@@ -177,6 +178,23 @@
 
   <!-- 测试区 -->
   <main class="wrap">
+    <!-- 空状态：未答题时的引导，避免首次进入误以为加载失败 -->
+    <section class="emptystate" id="emptyState">
+      <div class="emptystate__emoji">🃏</div>
+      <h2 class="emptystate__title">完成 8 道题，解锁你的麦门人格</h2>
+      <p class="emptystate__desc">
+        答完 8 题会给你：<b>麦门人格</b>（8 型之一）· 可下载的<b>麦籍卡</b> · <b>命定套餐</b> · <b>专属命令</b>，
+        还能算你和朋友的<b>人格匹配度</b>。
+      </p>
+      <div class="emptystate__cta">
+        <button class="btn btn--primary btn--lg" id="emptyStart">▶ 开始麦麦人格测试</button>
+        <button class="btn btn--ghost btn--lg" id="emptyDemo">⚡ 先看完整示例</button>
+      </div>
+      <p class="emptystate__note">
+        本页是<b>离线 Playground</b>（预置数据演示，未调用官方 MCP）；真实实时数据请在命令行用 <code>mcctl --live</code>。
+      </p>
+    </section>
+
     <section class="quiz hidden" id="quiz">
       <div class="quiz__top">
         <span class="quiz__count" id="qCount">1 / 8</span>
@@ -202,7 +220,7 @@
           <canvas id="cardCanvas" width="1080" height="1350" aria-label="你的麦籍卡"></canvas>
         </div>
         <div class="result__panel">
-          <div class="result__badge" id="rCode">CODE</div>
+          <div class="result__badge" id="rCode">待解锁</div>
           <h2 class="result__name" id="rName"></h2>
           <p class="result__title" id="rTitle"></p>
           <p class="result__motto" id="rMotto"></p>
@@ -259,15 +277,19 @@
     <!-- 能力速览 -->
     <section class="features" id="features">
       <h2 class="sec__title">不只是测试，它是一套真能下单的命令行</h2>
+      <p class="features__note">
+        ⬇ 下面这些是 <b>CLI（命令行）</b> 的能力：<b>已集成 33 个官方 MCP 工具</b>，离线 Mock 开箱可跑、
+        配置 Token 后走实时数据。本网页是<b>离线 Playground</b>，只用预置数据演示交互与算法。
+      </p>
       <div class="features__grid">
         <div class="feature"><div class="feature__ic">🃏</div><h3>mcctl whoami</h3><p>8 型麦麦人格测试，生成可分享麦籍卡。</p></div>
         <div class="feature"><div class="feature__ic">🍱</div><h3>mcctl decide</h3><p>按人格 / 热量 / 蛋白 / 预算 / 忌口 / 人数，组合搜索命定套餐。</p></div>
         <div class="feature"><div class="feature__ic">💸</div><h3>mcctl save</h3><p>一键领券、逐券试算、凑单与免配送费，给你真实到手价。</p></div>
         <div class="feature"><div class="feature__ic">🛒</div><h3>mcctl order</h3><p>到店 / 外送下单闭环，默认演练、二次确认，跳转官方支付。</p></div>
         <div class="feature"><div class="feature__ic">🎁</div><h3>mcctl points</h3><p>积分总览、商城兑换、抽奖（附理性提示）、活动日历、派对预约。</p></div>
-        <div class="feature"><div class="feature__ic">🔌</div><h3>33 MCP Tools</h3><p>官方 MCP 全量工具真实接入；无 Token 也能离线 Mock 完整体验。</p></div>
+        <div class="feature"><div class="feature__ic">🔌</div><h3>CLI · 33 个 MCP 工具</h3><p>命令行已集成 33 个官方 MCP 工具：无 Token 走离线 Mock，配置 Token 后 <code>mcctl --live</code> 走实时数据。<b>本网页为离线演示，不做实时调用。</b></p></div>
       </div>
-      <div class="terminal" id="terminalDemo" aria-label="真实终端演示">
+      <div class="terminal" id="terminalDemo" aria-label="CLI 终端演示">
         <div class="terminal__bar"><span></span><span></span><span></span><code class="terminal__title">mcctl demo</code></div>
         <p class="terminal__note">⬆ 真实 CLI 演示：安装后连接麦当劳官方 MCP（<code>mcctl --live</code>）即可获得实时菜单与到手价。</p>
 <pre class="terminal__body">$ pip install mcd-mcctl
