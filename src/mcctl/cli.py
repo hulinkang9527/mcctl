@@ -835,8 +835,10 @@ def demo_cmd(ctx: typer.Context):
     ui.console.print(
         ui.Panel.fit(
             "[bold]觉得 mcctl 好玩？[/bold]\n"
-            "⭐ 给项目点个 Star：https://github.com/hulinkang9527/mcctl\n"
-            "🍔 手机零安装网页版（8 题测麦门人格）：https://hulinkang9527.github.io/mcctl/",
+            "⭐ 给项目点个 Star：\n"
+            "https://github.com/hulinkang9527/mcctl\n"
+            "🍔 手机零安装测麦门人格（8 题）：\n"
+            "https://hulinkang9527.github.io/mcctl/",
             border_style=ui.MCD_GOLD,
         )
     )
