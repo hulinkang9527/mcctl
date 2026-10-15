@@ -169,7 +169,7 @@ mcctl decide -p FITA       # 板烧修行者的命定套餐
 
 ## 📚 文档
 
-[架构](docs/ARCHITECTURE.md) · [命令手册](docs/COMMANDS.md) · [人格图鉴](docs/PERSONAS.md) · [派对策划师](docs/PARTY.md) · [MCP 集成](MCP_INTEGRATION.md) · [Agent Skill](skill/SKILL.md) · [参赛声明（官方原文）](CONTEST_DECLARATION.md)
+[架构](docs/ARCHITECTURE.md) · [命令手册](docs/COMMANDS.md) · [人格图鉴](docs/PERSONAS.md) · [派对策划师](docs/PARTY.md) · [MCP 集成](MCP_INTEGRATION.md) · [Agent Skill](skill/SKILL.md) · [分享素材包](docs/PROMOTION.md) · [参赛声明（官方原文）](CONTEST_DECLARATION.md)
 
 ## 🧪 开发与测试
 
