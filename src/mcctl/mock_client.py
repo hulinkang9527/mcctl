@@ -9,8 +9,9 @@
 from __future__ import annotations
 
 import random
+import re
 import string
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 from typing import Any
 
 from mcctl import mock_data as D
@@ -303,7 +304,9 @@ async def _my_account(c: MockMCPClient, a: dict) -> Any:
 
 
 async def _mall_products(c: MockMCPClient, a: dict) -> Any:
-    return _ok({"products": [x.to_dict() for x in D.MALL_PRODUCTS]})
+    # 对齐官方：同一响应里既有积分商品（point>0），也有现金类主题活动 SPU（point=0，供派对工具取 spuId）
+    return _ok({"products": [x.to_dict() for x in D.MALL_PRODUCTS],
+                "spus": [dict(x) for x in D.PARTY_SPUS]})
 
 
 async def _mall_detail(c: MockMCPClient, a: dict) -> Any:
@@ -377,129 +380,297 @@ async def _my_prizes(c: MockMCPClient, a: dict) -> Any:
 
 
 # —— 主题活动（派对 / 品鉴会） ——
-_PARTY_CITIES = ["上海", "北京", "广州", "深圳", "杭州", "成都"]
+# 官方契约（逐级透传，缺一不可）：
+#   mall-points-products 取 spuId → query-party-city(spuId) 返回城市 code + 经纬度
+#   → query-party-store(code, latitude, longitude, spuId) → storeCode
+#   → query-party-store-date(spuId, storeCode) → dateStr
+#   → query-party-store-session(spuId, storeCode, dateStr) → 场次 id / 余位
+_PARTY_CITIES = [
+    {"code": "310100", "name": "上海市", "initial": "S", "sortNo": 1,
+     "latitude": 31.2304, "longitude": 121.4737},
+    {"code": "110100", "name": "北京市", "initial": "B", "sortNo": 2,
+     "latitude": 39.9042, "longitude": 116.4074},
+    {"code": "440100", "name": "广州市", "initial": "G", "sortNo": 3,
+     "latitude": 23.1291, "longitude": 113.2644},
+    {"code": "440300", "name": "深圳市", "initial": "S", "sortNo": 4,
+     "latitude": 22.5431, "longitude": 114.0579},
+    {"code": "330100", "name": "杭州市", "initial": "H", "sortNo": 5,
+     "latitude": 30.2741, "longitude": 120.1551},
+    {"code": "510100", "name": "成都市", "initial": "C", "sortNo": 6,
+     "latitude": 30.5728, "longitude": 104.0668},
+]
+
+# 城市 code → 门店（字段对齐官方 query-party-store 返回，businessStatus=1 表示营业中）
 _PARTY_STORES = {
-    "上海": [
-        {"code": "ST_LJZ", "name": "麦当劳陆家嘴环路餐厅", "address": "上海市浦东新区陆家嘴环路近IFC",
-         "cityCode": "310100", "cityName": "上海市", "distance": 860, "distanceText": "0.9km", "businessStatus": True},
-        {"code": "ST_JA", "name": "麦当劳静安嘉里中心餐厅", "address": "上海市静安区南京西路嘉里中心",
-         "cityCode": "310100", "cityName": "上海市", "distance": 2100, "distanceText": "2.1km", "businessStatus": True},
-        {"code": "ST_HP", "name": "麦当劳外滩中山东一路餐厅", "address": "上海市黄浦区中山东一路",
-         "cityCode": "310100", "cityName": "上海市", "distance": 3400, "distanceText": "3.4km", "businessStatus": True},
+    "310100": [
+        {"code": "ST_LJZ", "name": "麦当劳陆家嘴环路餐厅", "shortName": "陆家嘴环路餐厅",
+         "address": "上海市浦东新区陆家嘴环路近IFC", "cityCode": "310100", "cityName": "上海市",
+         "latitude": 31.2353, "longitude": 121.5057, "distance": 860, "distanceText": "0.9km",
+         "businessStatus": 1, "onlineBusinessStatus": True},
+        {"code": "ST_JA", "name": "麦当劳静安嘉里中心餐厅", "shortName": "静安嘉里中心餐厅",
+         "address": "上海市静安区南京西路嘉里中心", "cityCode": "310100", "cityName": "上海市",
+         "latitude": 31.2246, "longitude": 121.4462, "distance": 2100, "distanceText": "2.1km",
+         "businessStatus": 1, "onlineBusinessStatus": True},
+        {"code": "ST_HP", "name": "麦当劳外滩中山东一路餐厅", "shortName": "外滩餐厅",
+         "address": "上海市黄浦区中山东一路", "cityCode": "310100", "cityName": "上海市",
+         "latitude": 31.2397, "longitude": 121.4903, "distance": 3400, "distanceText": "3.4km",
+         "businessStatus": 1, "onlineBusinessStatus": True},
+    ],
+    "110100": [
+        {"code": "ST_GML", "name": "麦当劳国贸商城餐厅", "shortName": "国贸商城餐厅",
+         "address": "北京市朝阳区建国门外大街国贸商城", "cityCode": "110100", "cityName": "北京市",
+         "latitude": 39.9087, "longitude": 116.4606, "distance": 1500, "distanceText": "1.5km",
+         "businessStatus": 1, "onlineBusinessStatus": False},
+    ],
+    "440100": [
+        {"code": "ST_THE", "name": "麦当劳天河城餐厅", "shortName": "天河城餐厅",
+         "address": "广州市天河区天河路天河城", "cityCode": "440100", "cityName": "广州市",
+         "latitude": 23.1329, "longitude": 113.3206, "distance": 1200, "distanceText": "1.2km",
+         "businessStatus": 1, "onlineBusinessStatus": True},
+    ],
+    "440300": [
+        {"code": "ST_HQ", "name": "麦当劳华强北餐厅", "shortName": "华强北餐厅",
+         "address": "深圳市福田区华强北路", "cityCode": "440300", "cityName": "深圳市",
+         "latitude": 22.5477, "longitude": 114.0886, "distance": 900, "distanceText": "0.9km",
+         "businessStatus": 1, "onlineBusinessStatus": True},
+    ],
+    "330100": [
+        {"code": "ST_HSD", "name": "麦当劳湖滨银泰餐厅", "shortName": "湖滨银泰餐厅",
+         "address": "杭州市上城区延安路湖滨银泰", "cityCode": "330100", "cityName": "杭州市",
+         "latitude": 30.2511, "longitude": 120.1684, "distance": 1100, "distanceText": "1.1km",
+         "businessStatus": 1, "onlineBusinessStatus": True},
+    ],
+    "510100": [
+        {"code": "ST_CDJC", "name": "麦当劳春熙路餐厅", "shortName": "春熙路餐厅",
+         "address": "成都市锦江区春熙路", "cityCode": "510100", "cityName": "成都市",
+         "latitude": 30.6572, "longitude": 104.0818, "distance": 750, "distanceText": "0.8km",
+         "businessStatus": 1, "onlineBusinessStatus": True},
     ],
 }
-# 门店 → 可预约日期（按天给出，便于贴近 date_hint 演示）
-_PARTY_DATES_BY_STORE = {
-    "ST_LJZ": ["2026-10-17", "2026-10-18", "2026-10-24", "2026-10-25", "2026-10-31"],
-    "ST_JA": ["2026-10-18", "2026-10-19", "2026-10-25", "2026-10-26", "2026-11-01"],
-    "ST_HP": ["2026-10-18", "2026-10-25", "2026-10-26"],
+
+# 门店 → 可预约日期（写成「相对今天的天偏移」，演示数据永不过期）
+_PARTY_DATE_OFFSETS = {
+    "ST_LJZ": [2, 3, 9, 10, 16],
+    "ST_JA": [3, 4, 10, 11, 17],
+    "ST_HP": [3, 10, 11],
+    "ST_GML": [2, 4, 9],
+    "ST_THE": [3, 10],
+    "ST_HQ": [2, 9],
+    "ST_HSD": [4, 11],
+    "ST_CDJC": [3, 10],
 }
-# (门店, 日期) → 场次：字段对齐官方 query-party-store-session
-# price 为「每人价格（分）」，service 层 ÷100 归一化为元，与真实口径一致。
-_PARTY_SESSIONS_BY_STORE_DATE = {
-    ("ST_LJZ", "2026-10-18"): [
-        {"id": 1101, "timeStart": "10:30", "timeEnd": "12:00", "partyMin": 4, "partyMax": 8, "price": 8800, "leftNum": 5},
-        {"id": 1102, "timeStart": "14:00", "timeEnd": "15:30", "partyMin": 4, "partyMax": 10, "price": 7800, "leftNum": 2},
-        {"id": 1103, "timeStart": "16:30", "timeEnd": "18:00", "partyMin": 4, "partyMax": 12, "price": 6800, "leftNum": 8},
+
+# (门店, 天偏移) → 场次：字段对齐官方 query-party-store-session。
+# price 为「每人价格（分）」，service 层按官方口径 ÷100 归一化为元。
+_PARTY_SESSIONS_BY_STORE_OFFSET = {
+    ("ST_LJZ", 2): [
+        {"id": 1101, "timeStart": "10:30", "timeEnd": "12:00", "partyMin": 4, "partyMax": 8,
+         "price": 8800, "leftNum": 5},
+        {"id": 1102, "timeStart": "14:00", "timeEnd": "15:30", "partyMin": 4, "partyMax": 10,
+         "price": 7800, "leftNum": 2},
+        {"id": 1103, "timeStart": "16:30", "timeEnd": "18:00", "partyMin": 4, "partyMax": 12,
+         "price": 6800, "leftNum": 8},
     ],
-    ("ST_LJZ", "2026-10-17"): [
-        {"id": 1201, "timeStart": "10:30", "timeEnd": "12:00", "partyMin": 2, "partyMax": 6, "price": 9800, "leftNum": 3},
-        {"id": 1202, "timeStart": "14:00", "timeEnd": "15:30", "partyMin": 2, "partyMax": 6, "price": 8800, "leftNum": 6},
+    ("ST_LJZ", 3): [
+        {"id": 1201, "timeStart": "10:30", "timeEnd": "12:00", "partyMin": 2, "partyMax": 6,
+         "price": 9800, "leftNum": 3},
+        {"id": 1202, "timeStart": "14:00", "timeEnd": "15:30", "partyMin": 2, "partyMax": 6,
+         "price": 8800, "leftNum": 6},
     ],
-    ("ST_LJZ", "2026-10-24"): [
-        {"id": 1301, "timeStart": "10:30", "timeEnd": "12:00", "partyMin": 4, "partyMax": 10, "price": 8200, "leftNum": 7},
-        {"id": 1302, "timeStart": "16:30", "timeEnd": "18:00", "partyMin": 4, "partyMax": 12, "price": 6200, "leftNum": 12},
+    ("ST_LJZ", 9): [
+        {"id": 1301, "timeStart": "10:30", "timeEnd": "12:00", "partyMin": 4, "partyMax": 10,
+         "price": 8200, "leftNum": 7},
+        {"id": 1302, "timeStart": "16:30", "timeEnd": "18:00", "partyMin": 4, "partyMax": 12,
+         "price": 6200, "leftNum": 12},
     ],
-    ("ST_LJZ", "2026-10-25"): [
-        {"id": 1401, "timeStart": "10:30", "timeEnd": "12:00", "partyMin": 4, "partyMax": 10, "price": 8500, "leftNum": 6},
-        {"id": 1402, "timeStart": "14:00", "timeEnd": "15:30", "partyMin": 4, "partyMax": 10, "price": 7500, "leftNum": 4},
-        {"id": 1403, "timeStart": "18:30", "timeEnd": "20:00", "partyMin": 4, "partyMax": 12, "price": 9500, "leftNum": 1},
+    ("ST_LJZ", 10): [
+        {"id": 1401, "timeStart": "10:30", "timeEnd": "12:00", "partyMin": 4, "partyMax": 10,
+         "price": 8500, "leftNum": 6},
+        {"id": 1402, "timeStart": "14:00", "timeEnd": "15:30", "partyMin": 4, "partyMax": 10,
+         "price": 7500, "leftNum": 4},
+        {"id": 1403, "timeStart": "18:30", "timeEnd": "20:00", "partyMin": 4, "partyMax": 12,
+         "price": 9500, "leftNum": 1},
     ],
-    ("ST_LJZ", "2026-10-31"): [
-        {"id": 1501, "timeStart": "10:30", "timeEnd": "12:00", "partyMin": 4, "partyMax": 10, "price": 9000, "leftNum": 9},
+    ("ST_LJZ", 16): [
+        {"id": 1501, "timeStart": "10:30", "timeEnd": "12:00", "partyMin": 4, "partyMax": 10,
+         "price": 9000, "leftNum": 9},
     ],
-    ("ST_JA", "2026-10-18"): [
-        {"id": 2101, "timeStart": "10:30", "timeEnd": "12:00", "partyMin": 4, "partyMax": 8, "price": 9200, "leftNum": 4},
-        {"id": 2102, "timeStart": "14:00", "timeEnd": "15:30", "partyMin": 4, "partyMax": 8, "price": 8200, "leftNum": 3},
+    ("ST_JA", 3): [
+        {"id": 2101, "timeStart": "10:30", "timeEnd": "12:00", "partyMin": 4, "partyMax": 8,
+         "price": 9200, "leftNum": 4},
+        {"id": 2102, "timeStart": "14:00", "timeEnd": "15:30", "partyMin": 4, "partyMax": 8,
+         "price": 8200, "leftNum": 3},
     ],
-    ("ST_JA", "2026-10-19"): [
-        {"id": 2201, "timeStart": "16:00", "timeEnd": "17:30", "partyMin": 2, "partyMax": 6, "price": 8800, "leftNum": 5},
+    ("ST_JA", 4): [
+        {"id": 2201, "timeStart": "16:00", "timeEnd": "17:30", "partyMin": 2, "partyMax": 6,
+         "price": 8800, "leftNum": 5},
     ],
-    ("ST_JA", "2026-10-25"): [
-        {"id": 2301, "timeStart": "10:30", "timeEnd": "12:00", "partyMin": 4, "partyMax": 10, "price": 8600, "leftNum": 7},
-        {"id": 2302, "timeStart": "14:00", "timeEnd": "15:30", "partyMin": 4, "partyMax": 10, "price": 7600, "leftNum": 2},
-        {"id": 2303, "timeStart": "18:30", "timeEnd": "20:00", "partyMin": 4, "partyMax": 12, "price": 9800, "leftNum": 6},
+    ("ST_JA", 10): [
+        {"id": 2301, "timeStart": "10:30", "timeEnd": "12:00", "partyMin": 4, "partyMax": 10,
+         "price": 8600, "leftNum": 7},
+        {"id": 2302, "timeStart": "14:00", "timeEnd": "15:30", "partyMin": 4, "partyMax": 10,
+         "price": 7600, "leftNum": 2},
+        {"id": 2303, "timeStart": "18:30", "timeEnd": "20:00", "partyMin": 4, "partyMax": 12,
+         "price": 9800, "leftNum": 6},
     ],
-    ("ST_JA", "2026-10-26"): [
-        {"id": 2401, "timeStart": "10:30", "timeEnd": "12:00", "partyMin": 2, "partyMax": 6, "price": 9000, "leftNum": 4},
+    ("ST_JA", 11): [
+        {"id": 2401, "timeStart": "10:30", "timeEnd": "12:00", "partyMin": 2, "partyMax": 6,
+         "price": 9000, "leftNum": 4},
     ],
-    ("ST_JA", "2026-11-01"): [
-        {"id": 2501, "timeStart": "14:00", "timeEnd": "15:30", "partyMin": 4, "partyMax": 10, "price": 8000, "leftNum": 10},
+    ("ST_JA", 17): [
+        {"id": 2501, "timeStart": "14:00", "timeEnd": "15:30", "partyMin": 4, "partyMax": 10,
+         "price": 8000, "leftNum": 10},
     ],
-    ("ST_HP", "2026-10-18"): [
-        {"id": 3101, "timeStart": "10:30", "timeEnd": "12:00", "partyMin": 4, "partyMax": 10, "price": 9900, "leftNum": 6},
+    ("ST_HP", 3): [
+        {"id": 3101, "timeStart": "10:30", "timeEnd": "12:00", "partyMin": 4, "partyMax": 10,
+         "price": 9900, "leftNum": 6},
     ],
-    ("ST_HP", "2026-10-25"): [
-        {"id": 3201, "timeStart": "14:00", "timeEnd": "15:30", "partyMin": 4, "partyMax": 10, "price": 7200, "leftNum": 5},
-        {"id": 3202, "timeStart": "16:30", "timeEnd": "18:00", "partyMin": 4, "partyMax": 8, "price": 7900, "leftNum": 3},
+    ("ST_HP", 10): [
+        {"id": 3201, "timeStart": "14:00", "timeEnd": "15:30", "partyMin": 4, "partyMax": 10,
+         "price": 7200, "leftNum": 5},
+        {"id": 3202, "timeStart": "16:30", "timeEnd": "18:00", "partyMin": 4, "partyMax": 8,
+         "price": 7900, "leftNum": 3},
     ],
-    ("ST_HP", "2026-10-26"): [
-        {"id": 3301, "timeStart": "10:30", "timeEnd": "12:00", "partyMin": 2, "partyMax": 6, "price": 9400, "leftNum": 2},
+    ("ST_HP", 11): [
+        {"id": 3301, "timeStart": "10:30", "timeEnd": "12:00", "partyMin": 2, "partyMax": 6,
+         "price": 9400, "leftNum": 2},
+    ],
+    ("ST_GML", 2): [
+        {"id": 4101, "timeStart": "11:00", "timeEnd": "12:30", "partyMin": 4, "partyMax": 10,
+         "price": 8600, "leftNum": 5},
+    ],
+    ("ST_GML", 4): [
+        {"id": 4201, "timeStart": "15:00", "timeEnd": "16:30", "partyMin": 4, "partyMax": 12,
+         "price": 7600, "leftNum": 8},
+    ],
+    ("ST_GML", 9): [
+        {"id": 4301, "timeStart": "10:30", "timeEnd": "12:00", "partyMin": 6, "partyMax": 12,
+         "price": 8900, "leftNum": 3},
+    ],
+    ("ST_THE", 3): [
+        {"id": 5101, "timeStart": "10:30", "timeEnd": "12:00", "partyMin": 4, "partyMax": 10,
+         "price": 8400, "leftNum": 6},
+    ],
+    ("ST_THE", 10): [
+        {"id": 5201, "timeStart": "18:30", "timeEnd": "20:00", "partyMin": 4, "partyMax": 12,
+         "price": 9600, "leftNum": 4},
+    ],
+    ("ST_HQ", 2): [
+        {"id": 6101, "timeStart": "10:30", "timeEnd": "12:00", "partyMin": 4, "partyMax": 10,
+         "price": 8300, "leftNum": 7},
+    ],
+    ("ST_HQ", 9): [
+        {"id": 6201, "timeStart": "14:00", "timeEnd": "15:30", "partyMin": 4, "partyMax": 10,
+         "price": 7900, "leftNum": 2},
+    ],
+    ("ST_HSD", 4): [
+        {"id": 7101, "timeStart": "10:30", "timeEnd": "12:00", "partyMin": 4, "partyMax": 10,
+         "price": 8100, "leftNum": 5},
+    ],
+    ("ST_HSD", 11): [
+        {"id": 7201, "timeStart": "15:30", "timeEnd": "17:00", "partyMin": 4, "partyMax": 8,
+         "price": 7700, "leftNum": 4},
+    ],
+    ("ST_CDJC", 3): [
+        {"id": 8101, "timeStart": "10:30", "timeEnd": "12:00", "partyMin": 4, "partyMax": 10,
+         "price": 8000, "leftNum": 6},
+    ],
+    ("ST_CDJC", 10): [
+        {"id": 8201, "timeStart": "16:30", "timeEnd": "18:00", "partyMin": 4, "partyMax": 12,
+         "price": 7300, "leftNum": 3},
     ],
 }
 
 
 async def _party_city(c: MockMCPClient, a: dict) -> Any:
-    return _ok({"cities": _PARTY_CITIES})
+    """query-party-city(spuId)：可参与城市（官方为裸数组，含 code 与经纬度）。"""
+    return _ok(_PARTY_CITIES)
 
 
 async def _party_store(c: MockMCPClient, a: dict) -> Any:
-    city = a.get("city", "上海")
-    stores = _PARTY_STORES.get(city, [
-        {"code": "ST_CT", "name": "麦当劳市中心主题餐厅", "address": city,
-         "cityCode": "0", "cityName": city, "distance": 1200, "distanceText": "1.2km", "businessStatus": True},
-    ])
-    return _ok({"city": city, "stores": stores})
+    """query-party-store(code, latitude, longitude, spuId)：城市下可约门店。"""
+    code = str(a.get("code") or a.get("cityCode") or "310100")
+    return _ok(_PARTY_STORES.get(code) or _PARTY_STORES["310100"])
 
 
 async def _party_date(c: MockMCPClient, a: dict) -> Any:
-    store = a.get("store", "ST_LJZ")
-    return _ok({"store": store, "dates": _PARTY_DATES_BY_STORE.get(store, _PARTY_DATES_BY_STORE["ST_LJZ"])})
+    """query-party-store-date(spuId, storeCode)：门店可预约日期。"""
+    store = str(a.get("storeCode") or a.get("store") or "ST_LJZ")
+    offsets = _PARTY_DATE_OFFSETS.get(store) or [2, 3, 9]
+    today = c._now().date()
+    return _ok([{"date": (today + timedelta(days=o)).isoformat(), "storeCode": store}
+                for o in offsets])
 
 
 async def _party_session(c: MockMCPClient, a: dict) -> Any:
-    store = a.get("store", "ST_LJZ")
-    date = a.get("date", "2026-10-18")
-    return _ok({"store": store, "date": date,
-                "sessions": _PARTY_SESSIONS_BY_STORE_DATE.get((store, date), [])})
+    """query-party-store-session(spuId, storeCode, dateStr)：场次（人数范围/价格/余位）。"""
+    store = str(a.get("storeCode") or a.get("store") or "ST_LJZ")
+    date_str = str(a.get("dateStr") or a.get("date") or "")
+    try:
+        offset = (date.fromisoformat(date_str) - c._now().date()).days
+    except ValueError:
+        offset = 2
+    return _ok(_PARTY_SESSIONS_BY_STORE_OFFSET.get((store, offset), []))
 
 
 async def _party_order_create(c: MockMCPClient, a: dict) -> Any:
     pid = "PARTY" + "".join(c._rnd.choices(string.digits, k=8))
     return _ok({"party_order_id": pid, "status": "预约成功",
-                "city": a.get("city"), "store": a.get("store"),
-                "date": a.get("date"), "session": a.get("session"),
-                "people": a.get("people", 6),
+                "partyType": a.get("partyType", 1), "spuId": a.get("spuId"),
+                "storeCode": a.get("storeCode") or a.get("store"),
+                "dateStr": a.get("dateStr") or a.get("date"),
+                "sessionId": a.get("id"),
+                "count": a.get("count") or a.get("people", 6),
                 "pay_url": f"https://open.mcd.cn/mcp/demo-pay/{pid}"},
                note="演示预约，不会真实扣款")
 
 
+# —— 企业团餐促销 / 满意度问卷奖券 ——
 async def _promotions(c: MockMCPClient, a: dict) -> Any:
-    """query-promotions：查询当前可参与/即将开始的促销活动（离线仿真）。"""
-    return _ok({"promotions": [
-        {"id": "PM_1024", "title": "1024 程序员节 · 买一送一", "period": "2026-10-20 ~ 2026-10-26",
-         "scope": ["BUR_DOUBLE_CHEESE", "BUR_FISH"], "note": "活动期间指定单品买一送一"},
-        {"id": "PM_MEAL", "title": "麦麦超值套餐立减 5 元", "period": "2026-10-01 ~ 2026-11-30",
-         "scope": ["meal"], "note": "部分套餐可叠加优惠券"},
-    ]})
+    """query-promotions：门店企业团餐场景（beType=6 / orderType=2）可用的满减满折规则。
+
+    官方前置条件：仅企业团餐场景可用，且需先用 delivery-query-stores 拿到
+    storeCode 与 beCode；非该场景调用会被拒绝或返回空规则，这里如实仿真。
+    """
+    store_code = str(a.get("storeCode") or "")
+    if not store_code:
+        return {"ok": False,
+                "error": "query-promotions 需要 storeCode（先从 delivery-query-stores 获取）"}
+    try:
+        be_type = int(a.get("beType") or 0)
+    except (TypeError, ValueError):
+        be_type = 0
+    if be_type != 6:
+        return _ok({"storeCode": store_code, "promotions": []},
+                   note="官方该工具仅企业团餐场景（beType=6、orderType=2）可用，其他场景无促销规则")
+    rules: list[dict[str, Any]] = [
+        {"promotionId": "PM_GROUP_200_30", "promotionType": "满减", "threshold": 200,
+         "amount": 30, "title": "团餐满 200 元减 30 元", "beCode": a.get("beCode", "")},
+        {"promotionId": "PM_GROUP_500_88", "promotionType": "满折", "threshold": 500,
+         "discount": 0.88, "title": "团餐满 500 元享 8.8 折", "beCode": a.get("beCode", "")},
+    ]
+    if a.get("reservationDate"):
+        for r in rules:
+            r["reservationDate"] = a["reservationDate"]
+    return _ok({"storeCode": store_code, "beType": be_type, "promotions": rules},
+               note="离线仿真规则，真实满减以官方返回为准")
 
 
 async def _survey_coupon(c: MockMCPClient, a: dict) -> Any:
-    """query-survey-coupon：查询问卷任务可领取的优惠券（离线仿真）。"""
-    return _ok({"surveys": [
-        {"id": "SV_TASTE", "title": "口味偏好小问卷", "reward": "中薯条兑换券", "status": "可参与"},
-        {"id": "SV_STORE", "title": "门店体验反馈问卷", "reward": "5 元满减券", "status": "可参与"},
-    ]})
+    """query-survey-coupon：按订单号查询本人 CSAT 满意度答卷与关联奖券。
+
+    只返回满意度描述、奖券标题 / 核销时间 / 核销状态 / 点餐方式；
+    原始答卷、会员号、couponId / couponCode 不猜测（与官方约定一致）。
+    """
+    order_id = str(a.get("orderId") or "")
+    if not order_id:
+        return {"ok": False, "error": "query-survey-coupon 需要 orderId（用户明确提供的订单号）"}
+    if not re.fullmatch(r"[A-Za-z0-9_-]{1,64}", order_id):
+        return {"ok": False, "error": "orderId 仅允许字母、数字、下划线与连字符，最长 64 位"}
+    return _ok({"orderId": order_id, "satisfaction": "满意（4/5）",
+                "coupon": {"title": "满意度回馈 · 中薯条兑换券", "redeemTime": "2026-10-15 12:30:00",
+                           "redeemed": False, "orderType": "到店取餐"}},
+               note="离线仿真数据，仅用于演示该工具返回结构")
 
 
 # 工具名 → 处理函数映射（覆盖麦当劳 MCP 当前开放的全部工具）

@@ -122,6 +122,57 @@ class RealMCPClient(McdServer):
             self._session = None
 
     @staticmethod
+    def _extract_json(text: str) -> Any | None:
+        """从「说明文字 + 完整 JSON」的文本里把 JSON 抠出来。
+
+        真实模式实测：官方有时直接把 API 响应包成一段 Markdown 说明
+        （``# API Response Information`` + 字段释义 + 完整 JSON），此时
+        ``json.loads`` 整段会失败，必须再定位 JSON 片段，否则解析层只能拿到
+        一段文本、所有列表都变空。优先取**末尾**的 JSON（说明里也可能出现花括号）。
+        """
+        stripped = text.strip()
+        try:
+            return json.loads(stripped)
+        except json.JSONDecodeError:
+            pass
+        lines = stripped.splitlines()
+        for i in range(len(lines) - 1, -1, -1):
+            head = lines[i].lstrip()
+            if head.startswith("{") or head.startswith("["):
+                try:
+                    return json.loads("\n".join(lines[i:]).strip())
+                except json.JSONDecodeError:
+                    continue
+        # 兜底：全文扫描第一个可完整闭合的 JSON 片段
+        for start, ch in enumerate(stripped):
+            if ch not in "{[":
+                continue
+            close = "}" if ch == "{" else "]"
+            depth, in_str, esc = 0, False, False
+            for i in range(start, len(stripped)):
+                c = stripped[i]
+                if in_str:
+                    if esc:
+                        esc = False
+                    elif c == "\\":
+                        esc = True
+                    elif c == '"':
+                        in_str = False
+                    continue
+                if c == '"':
+                    in_str = True
+                elif c == ch:
+                    depth += 1
+                elif c == close:
+                    depth -= 1
+                    if depth == 0:
+                        try:
+                            return json.loads(stripped[start:i + 1])
+                        except json.JSONDecodeError:
+                            break
+        return None
+
+    @staticmethod
     def _parse(result: Any) -> Any:
         """把 CallToolResult 归一化为 Python 对象。"""
         # 工具显式声明的结构化输出优先
@@ -138,12 +189,11 @@ class RealMCPClient(McdServer):
         raw = "\n".join(t for t in texts if t).strip()
         if not raw:
             return {"ok": True, "source": "live", "data": None}
-        try:
-            parsed = json.loads(raw)
+        parsed = RealMCPClient._extract_json(raw)
+        if parsed is not None:
             return {"ok": True, "source": "live", "data": parsed}
-        except json.JSONDecodeError:
-            # 兼容直接返回纯文本的工具
-            return {"ok": True, "source": "live", "data": {"text": raw}}
+        # 兼容直接返回纯文本的工具（如 list-nutrition-foods 的表格文本）
+        return {"ok": True, "source": "live", "data": {"text": raw}}
 
     async def health_check(self) -> bool:
         """探测连通性并建立/复用会话（auto 模式据此决定是否降级）。"""

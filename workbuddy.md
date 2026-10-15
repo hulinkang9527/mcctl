@@ -85,7 +85,7 @@
 
 ## 7. 派对策划师强化（第二轮迭代：主打差异化亮点）
 
-**我：** 榜单上点餐 / 省钱 / 配餐赛道已经挤满，但我翻官方文档发现 v1.0.7 才开放的「主题活动」链路（`query-party-city → query-party-store → query-partystore-date → query-partystore-session → party-order-create`）几乎没人系统做——生日派对、品鉴会预约是真实刚需。把这条链路做成 mcctl 的主打亮点：用户只说人数、预算、期望日期，自动求解最优场次。
+**我：** 榜单上点餐 / 省钱 / 配餐赛道已经挤满，但我翻官方文档发现 v1.0.7 才开放的「主题活动」链路（`mall-points-products(spuId) → query-party-city → query-party-store → query-party-store-date → query-party-store-session → party-order-create`）几乎没人系统做——生日派对、品鉴会预约是真实刚需。把这条链路做成 mcctl 的主打亮点：用户只说人数、预算、期望日期，自动求解最优场次。
 
 **WorkBuddy：** 建议不要做成"罗列式"（把几十个场次堆给用户），而是**约束求解**：
 1. 硬约束：人数落在场次 `[partyMin, partyMax]`、估算总价 ≤ 预算、剩余名额 > 0、门店营业中、距离上限、周末偏好、过期日期剔除；
@@ -95,7 +95,7 @@
 **我：** 按这个实现 `engines/party.py` + `mcctl party plan`，数据结构对齐官方返回（`PartyStore` 含 distance / businessStatus，`PartySession` 含 partyMin / partyMax / price / leftNum），mock 与真实共用同一套解析。
 
 **WorkBuddy：** 实现过程中发现两个真实坑：
-- **价格口径不统一**：官方 `query-partystore-session` 示例 `price=1000`，而 `party-order-create` 订单单价是 50 元，两者口径不同。统一约定 `PartySession.price` 为「每人价格（分）」，service 层 ÷100 归一化为元，真实接入以官方最新返回为准（只改一处换算）。
+- **派对链路参数易踩坑**：城市必须传 `code + 经纬度`、门店传 `storeCode`、日期传 `dateStr`（用城市名会被服务端拒绝），且工具名是 `query-party-store-date` / `query-party-store-session`。用真实 Token 逐级实测后对齐（实测 50 元/人 = `price 5000`，即分为单位）。
 - **过期日期残留**：接口可能返回今天之前的日期，引擎统一按"今天"过滤，避免推荐已过期场次。
 
 **我：** 给引擎补测试，重点覆盖约束边界（人数超上限 / 预算不足 / 无名额 / 打烊门店 / 周末偏好 / 无可行方案）。

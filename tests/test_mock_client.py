@@ -93,11 +93,40 @@ def test_lottery_costs_points_and_has_limit():
     assert sixth["ok"] is False  # 每日上限5次
 
 
-def test_party_booking_flow():
+def test_party_chain_official_contract():
+    """派对链路按官方契约调用：spuId → code+经纬度 → storeCode → dateStr。"""
     client = MockMCPClient()
-    cities = _run(client.call_tool("query-party-city"))["data"]["cities"]
-    assert "上海" in cities
+    cities = _run(client.call_tool("query-party-city", {"spuId": 1779}))["data"]
+    assert any(c["name"] == "上海市" and c["code"] == "310100" for c in cities)
+    city = next(c for c in cities if c["code"] == "310100")
+
+    stores = _run(client.call_tool("query-party-store", {
+        "spuId": 1779, "code": city["code"],
+        "latitude": city["latitude"], "longitude": city["longitude"]}))["data"]
+    assert stores and stores[0]["code"] and stores[0]["distance"] >= 0
+    store_code = stores[0]["code"]
+
+    dates = _run(client.call_tool("query-party-store-date",
+                                  {"spuId": 1779, "storeCode": store_code}))["data"]
+    assert dates and dates[0]["storeCode"] == store_code
+    date_str = dates[0]["date"]
+
+    sessions = _run(client.call_tool("query-party-store-session", {
+        "spuId": 1779, "storeCode": store_code, "dateStr": date_str}))["data"]
+    assert sessions, f"{store_code} {date_str} 应有场次"
+    s = sessions[0]
+    assert s["price"] > 0 and s["partyMin"] <= s["partyMax"]
+
     book = _run(client.call_tool("party-order-create", {
-        "city": "上海", "store": "麦当劳陆家嘴环路餐厅", "date": "2026-10-25",
-        "session": "18:30-20:00", "people": 8}))["data"]
+        "partyType": 1, "spuId": 1779, "storeCode": store_code, "dateStr": date_str,
+        "id": s["id"], "leftNum": s["leftNum"], "count": 6}))["data"]
     assert book["status"] == "预约成功" and book["party_order_id"]
+
+
+def test_mall_products_expose_party_spus():
+    """mall-points-products 同时给出积分商品与派对 SPU（后者 point=0，供派对取 spuId）。"""
+    client = MockMCPClient()
+    data = _run(client.call_tool("mall-points-products"))["data"]
+    assert data["products"] and data["spus"]
+    assert all(int(x["point"]) == 0 and x["spuId"] > 0 for x in data["spus"])
+    assert any("派对" in x["catName"] for x in data["spus"])

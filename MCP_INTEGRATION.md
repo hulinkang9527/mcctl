@@ -96,23 +96,42 @@
 
 ### 2.8 主题派对 / 品鉴会（麦麦派对策划师）
 
-| Tool | 官方名称 | mcctl 中的用途 |
+官方链路是**逐级透传**的，参数用错会被服务端拒绝（不是返回空数据）：spuId 出自商城
+SPU 列表，城市必须传 code + 经纬度，门店/日期必须传 storeCode / dateStr。
+
+| Tool（真实参数） | 官方名称 | mcctl 中的用途 |
 |---|---|---|
-| `query-party-city` | 可参与城市 | `mcctl party cities` |
-| `query-party-store` | 城市可参与门店（含距离/营业状态） | `mcctl party book` 级联第一步 / `party plan` 候选门店 |
-| `query-partystore-date` | 可预约日期 | 级联第二步 |
-| `query-partystore-session` | 可预约场次（人数范围/价格/剩余名额） | 级联第三步 |
-| `party-order-create` | 主题活动下单 | `mcctl party book --confirm` / `party plan --confirm` |
+| `mall-points-products` | 商城 SPU（含 `catName` 为派对类的现金 SPU） | `party_products()` 取 `spuId` |
+| `query-party-city(spuId)` | 可参与城市（code + 经纬度） | `mcctl party cities` |
+| `query-party-store(code, latitude, longitude, spuId)` | 城市可参与门店（含距离/营业状态） | `party book` 级联第一步 / `party plan` 候选门店 |
+| `query-party-store-date(spuId, storeCode)` | 可预约日期 | 级联第二步 |
+| `query-party-store-session(spuId, storeCode, dateStr)` | 可预约场次（人数范围/价格/剩余名额） | 级联第三步 |
+| `party-order-create(partyType, spuId, storeCode, code, dateStr, id, leftNum, timeStart, timeEnd, count, partyTimeInfo)` | 主题活动下单（`partyType=1` 包场） | `mcctl party book --confirm` / `party plan --confirm` |
 
 **`mcctl party plan`（主打亮点）把这条链路做成约束求解**：按 人数 / 预算 / 期望日期 /
 距离 / 周末偏好 硬约束过滤全部（门店 × 日期 × 场次）组合，按人均成本 + 日期贴近度排序，
-输出 Top3 方案与推荐理由。结构化模型：`PartyStore`（distance / businessStatus）、
-`PartyDate`、`PartySession`（partyMin / partyMax / price / leftNum），见 `models.py` 与
-`docs/PARTY.md`。
+输出 Top3 方案与推荐理由。结构化模型：`PartyCity`（code / 经纬度）、`PartyStore`
+（distance / businessStatus）、`PartyDate`、`PartySession`（partyMin / partyMax / price /
+leftNum），见 `models.py` 与 [`docs/PARTY.md`](docs/PARTY.md)。
 
-> ⚠️ 价格口径：官方 `query-partystore-session` 的 `price` 展示值与下单单价口径不同（文档示例
-> 分别为 1000 与 50 元）。本项目统一约定为「每人价格（分）」，service 层 ÷100 归一化为元；
-> 真实接入以官方最新返回为准。
+**真实模式实测范围（Token 实测，非文档推断）**：
+
+| 能力 | 实测结果 |
+|---|---|
+| `mcctl --live tools` | 35 个工具全部列出 |
+| 派对全链路 | 4 个在售派对 SPU、281 个可参与城市、上海市 169 家可约门店、真实档期与场次（50 元/人、余位 12） |
+| `list-nutrition-foods` | 返回文本表（`[160]{productName,...}:` + 逗号分隔行），已按表格解析（160 条餐品） |
+| 规模控制 | 上海单城市全量扫描是上千次调用 → `party plan` 默认限「最近 8 家门店 + 未来 14 天」，可用 `--max-stores / --days` 调整 |
+
+> ⚠️ 价格口径：实测 `query-party-store-session` 的 `price` 为**分**（50 元/人 = `5000`），
+> 与商城展示价一致。本项目统一约定为「每人价格（元）」，service 层按「≥100 视为分」归一化；
+> 真实接入以官方最新返回为准（口径变化只需改 `_party_price()` 一处）。
+
+> ⚠️ 边界（不夸大）：**算价 / 下单类**工具的真实参数是 `storeCode + orderType + beType`
+> （如 `calculate-price`、`query-nearby-stores` 需 `beType + searchType`）。这部分当前
+> 以离线 Mock 演示为主，未做真实下单验证；文档与页面中凡标注「离线演示」的数字均来自
+> 内置演示数据，不代表官方实时结果。
+
 
 ## 3. 端到端调用流程
 
@@ -176,20 +195,19 @@ query-order ──► 跟踪状态；cancel-order ──► 可取消
 
 - 积分：`query-my-account → mall-points-products → mall-create-order`，积分不足时拦截并提示差额。
 - 抽奖：`query-lottery-info` 明示概率与消耗，`draw-lottery` 需二次确认，并提示"积分更稳妥的用法是直接兑换餐饮券"。
-- 派对：严格按官方级联 `city → store → date → session → party-order-create`，缺一步都不下单。
+- 派对：严格按官方级联 `mall-points-products(spuId) → query-party-city → query-party-store →
+  query-party-store-date → query-party-store-session → party-order-create`，参数逐级透传，缺一步都不下单。
 
 **`party plan`（麦麦派对策划师）完整流程：**
 
 ```text
-query-party-city ──► 城市
-query-party-store ──► 候选门店（含距离 / businessStatus）
-  └─ query-partystore-date ──► 每店可约日期
-       └─ query-partystore-session ──► 每店每日期场次
-            │  （partyMin/partyMax/price/leftNum 结构化）
-            ▼
-本地约束引擎 engines/party.py：人数/预算/日期/距离/周末/名额 硬过滤
-            │
-            人均成本 + 日期贴近度 排序
+mall-points-products ──► 在售派对 SPU（spuId）
+query-party-city ──► 城市（code + 经纬度）
+query-party-store ──► 候选门店（storeCode，含距离 / businessStatus）
+  └─ query-party-store-date ──► 每店可约日期（dateStr）
+       └─ query-party-store-session ──► 每店每日期场次（id / 时间 / partyMin-partyMax / price / leftNum）
+            │  本地约束引擎 engines/party.py：人数/预算/日期/距离/周末/名额 硬过滤
+            │  人均成本 + 日期贴近度 排序
             ▼
 输出 Top3 方案 + 推荐理由 → --confirm 才调用 party-order-create（官方支付跳转）
 ```

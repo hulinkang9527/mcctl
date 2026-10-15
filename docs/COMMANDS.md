@@ -110,7 +110,7 @@ mcctl points lottery --draw --confirm   # 真正消耗积分抽奖
 ## 7. 主题派对 / 品鉴会（麦麦派对策划师）
 
 ```bash
-mcctl party cities                                   # 可参与城市
+mcctl party cities                                   # 可参与城市（--spu 切换派对主题）
 mcctl party book --city 上海 --people 8              # 级联查询门店/日期/场次（演练）
 mcctl party book --city 上海 --store <门店> --date <日期> --session <场次> --people 8 --confirm
 
@@ -119,19 +119,27 @@ mcctl party plan --city 上海 --people 8 --budget 600 --date-hint 2026-10-25
 mcctl party plan --city 上海 --people 6 --budget 400 --weekend          # 只约周末
 mcctl party plan --city 上海 --people 6 --budget 400 --max-distance 2   # 只看 2km 内门店
 mcctl party plan --city 上海 --people 8 --budget 600 --date-hint 2026-10-25 --confirm  # 按最优方案直接预约
+
+# 真实模式：一个城市可能上百家门店、可约到 30 天后，建议先限规模
+mcctl --live party plan --city 上海 --people 6 --days 12 --max-stores 6
+mcctl --live party plan --spu 8516 --city 上海 --people 8 --budget 1200  # 换主题（尊享版生日派对）
 ```
 
-严格按官方级联 `city → store → date → session → party-order-create`，缺一步不下单。
+严格按官方级联 `mall-points-products(spuId) → query-party-city → query-party-store →
+query-party-store-date → query-party-store-session → party-order-create`，参数逐级透传
+（城市必须传 code + 经纬度，门店传 storeCode，日期传 dateStr），缺一步不下单。
+`--city` 支持城市名（可省略「市」）或城市 code；`--spu` 缺省取官方在售的第一个派对 SPU。
 `party plan` 的硬约束：人数落在场次 `[partyMin, partyMax]`、估算总价 ≤ 预算、
 **剩余名额足以容纳全部人数**（`leftNum >= people`，而不只是"还有空位"）、
 门店营业中、距离 ≤ 上限、周末偏好；软排序：人均成本 + 日期贴近度 + 名额稀缺度。
-无可行方案时如实返回空并给出淘汰原因（`没有满足约束的派对场次：请放宽 人数/预算/日期/距离 后重试`），
+无可行方案时如实返回空并给出淘汰原因（`没有满足约束的派对场次（上海 扫描了 6/169 家门店）…`），
 **不会为凑数推荐一个不满足约束的场次**。
 
 网页版派对策划师复用同一套硬约束，并额外处理：人数非整数 / 少于 1 / 超过 12、
 预算为 0 或负数、只勾"仅周末"但无周末场次、场次字段缺失（缺 `leftNum` 保守判为不可预订，
 缺门店/日期/时间/价格直接跳过并计数），全部给出「没有找到符合条件的方案」+ 原因 + 放宽建议。
-价格口径：官方 `query-partystore-session.price` 展示值按「每人价格」，本项目统一 ÷100 归一化为元，真实接入以官方最新返回为准。
+价格口径：实测官方 `query-party-store-session.price` 为**分**（50 元/人 = `5000`），
+本项目统一「每人价格（元）」，service 层按「≥100 视为分」归一化，以官方最新返回为准。
 
 ## 8. 连接与诊断
 

@@ -141,6 +141,24 @@ class Campaign:
 
 
 @dataclass
+class PartyCity:
+    """主题活动可参与城市（query-party-city，按 spuId 返回）。
+
+    官方返回城市 code + 经纬度，二者都是后续 ``query-party-store`` 的必传参数，
+    因此城市不能只用名字传递。
+    """
+
+    code: str
+    name: str
+    latitude: float = 0.0
+    longitude: float = 0.0
+    initial: str = ""
+
+    def to_dict(self) -> dict[str, Any]:
+        return asdict(self)
+
+
+@dataclass
 class PartyStore:
     """主题活动可参与门店（query-party-store）。
 

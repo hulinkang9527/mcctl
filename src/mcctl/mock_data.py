@@ -147,6 +147,20 @@ MALL_PRODUCTS: list[MallProduct] = [
     MallProduct("MALL_BADGE", "程序员节实体徽章", 1200, 0, "周边", 500, "M-CODE 纪念徽章"),
 ]
 
+# 官方 mall-points-products 除积分商品外，还混装「现金类主题活动 SPU」（point=0、price 有值），
+# 派对工具的 spuId 就出自这里；这里按官方字段名（spuId/spuName/catName/price）给一份离线仿真。
+PARTY_SPUS: list[dict] = [
+    {"spuId": 1779, "spuName": "麦当劳奇妙生日派对", "catName": "生日类派对", "point": "0",
+     "price": "50", "shopId": 5, "status": 2, "selling": "上海迪士尼度假区米妮主题",
+     "upTime": "2023-03-16 00:00:00", "downTime": "2027-12-31 23:59:59"},
+    {"spuId": 8516, "spuName": "麦当劳一起开心鸭尊享版生日派对", "catName": "生日类派对", "point": "0",
+     "price": "138", "shopId": 5, "status": 2, "selling": "唐老鸭主题尊享版生日派对",
+     "upTime": "2024-10-31 00:00:00", "downTime": "2026-12-31 23:59:59"},
+    {"spuId": 1830, "spuName": "麦当劳亲子读书会", "catName": "读书会", "point": "0",
+     "price": "45", "shopId": 5, "status": 2, "selling": "一起打造属于你们的亲子阅读时间",
+     "upTime": "2023-03-29 00:00:00", "downTime": "2026-12-30 23:59:59"},
+]
+
 LOTTERY_INFO = {
     "status": "ongoing",
     "cost_points": 100,

@@ -12,6 +12,7 @@
 from __future__ import annotations
 
 import asyncio
+from datetime import date, timedelta
 from types import SimpleNamespace
 from typing import Optional
 
@@ -27,7 +28,7 @@ from mcctl.engines.decide import decide as engine_decide
 from mcctl.engines.diet import MealConstraints, optimize_meal
 from mcctl.engines.party import PartyConstraints, plan_party
 from mcctl.engines.save import save_flow
-from mcctl.service import DEFAULT_STORE_ID, McD, aclose_servers, get_server
+from mcctl.service import DEFAULT_PARTY_SPU, DEFAULT_STORE_ID, McD, aclose_servers, get_server
 
 app = typer.Typer(add_completion=True, help="🍔 mcctl — 麦门控制面（kubectl for McDonald's）",
                   no_args_is_help=False, rich_markup_mode="rich")
@@ -401,6 +402,13 @@ def diet_cmd(
         ui.print_json({"period": period, "plans": plans, "mode": mode})
         return
     ui.info(f"控卡配餐目标：人均 ≤{kcal:g} kcal、蛋白 ≥{protein:g}g" + (f"、预算 ¥{budget:g}" if budget else ""))
+    if not plans:
+        ui.warn("没有满足约束的配餐组合：请放宽 热量 / 蛋白 / 预算 后重试"
+                + ("；真实模式下菜单来自官方营养表（无价格字段），预算约束请用 --mock 体验。" if mode == "live" else "。"))
+        return
+    if mode == "live" and all(not p["total_price"] for p in plans):
+        ui.warn("真实模式下官方营养表（list-nutrition-foods）不含价格，因此单价显示为 0、预算约束不生效；"
+                "取价需先拿到门店 storeCode 再调 query-meals(storeCode/orderType/beType)。")
     for p in plans:
         ui.console.print(ui.render_plan(p))
 
@@ -667,78 +675,138 @@ def calendar_cmd(ctx: typer.Context, status: Optional[str] = typer.Option(None, 
 
 
 @party_app.command("cities")
-def party_cities(ctx: typer.Context):
-    """主题活动可参与城市。"""
+def party_cities(
+    ctx: typer.Context,
+    spu: Optional[int] = typer.Option(None, "--spu", help="主题活动 SPU（缺省取官方在售的第一个派对 SPU）"),
+):
+    """主题活动可参与城市（query-party-city）。"""
     async def go():
         mcd, _ = await _make_mcd(_force_mode(ctx))
-        return await mcd.party_cities()
-    res = _run(go())
-    ui.print_json(res) if ctx.obj.json_out else ui.console.print("可参与城市：" + "、".join(res))
+        spu_id = await _resolve_party_spu(mcd, spu)
+        return spu_id, [c.to_dict() for c in await mcd.party_cities(spu_id)]
+    spu_id, cities = _run(go())
+    if ctx.obj.json_out:
+        ui.print_json({"spuId": spu_id, "cities": cities})
+        return
+    ui.info(f"主题活动 SPU：{spu_id}（--spu 可切换其他派对主题）")
+    ui.console.print("可参与城市：" + "、".join(c["name"] for c in cities))
+
+
+async def _resolve_party_spu(mcd: McD, spu: Optional[int]) -> int:
+    """确定主题活动 SPU：显式 --spu 优先，否则取官方在售的第一个派对 SPU。"""
+    if spu:
+        return int(spu)
+    products = await mcd.party_products()
+    return int(products[0]["spu_id"]) if products else DEFAULT_PARTY_SPU
+
+
+async def _resolve_party_city(mcd: McD, spu_id: int, city: str):
+    """把 --city（名字或 code）解析为官方链路要求的城市对象（含 code 与经纬度）。"""
+    cities = await mcd.party_cities(spu_id)
+    if not cities:
+        raise RuntimeError(f"SPU {spu_id} 当前没有可参与主题活动的城市，换一个 --spu 试试。")
+    target = McD.match_city(cities, city)
+    if target is None:
+        raise RuntimeError(f"未找到城市「{city}」，可选：" + "、".join(c.name for c in cities[:15]) + " …")
+    return target
 
 
 @party_app.command("book")
 def party_book(
     ctx: typer.Context,
-    city: str = typer.Option("上海", "--city"),
-    store: Optional[str] = typer.Option(None, "--store"),
-    date: Optional[str] = typer.Option(None, "--date"),
-    session: Optional[str] = typer.Option(None, "--session"),
+    city: str = typer.Option("上海", "--city", help="城市名或城市 code"),
+    spu: Optional[int] = typer.Option(None, "--spu", help="主题活动 SPU（缺省取在售第一个）"),
+    store: Optional[str] = typer.Option(None, "--store", help="门店 code 或名称，缺省取最近一家"),
+    date: Optional[str] = typer.Option(None, "--date", help="日期 yyyy-MM-dd，缺省取最早可约"),
+    session: Optional[str] = typer.Option(None, "--session", help="场次如 10:30-12:00，缺省取第一个"),
     people: int = typer.Option(6, "--people"),
     confirm: bool = typer.Option(False, "--confirm"),
 ):
-    """主题派对/品鉴会预约（city→store→date→session→order），需 --confirm。"""
+    """主题派对/品鉴会预约（spu→city→store→date→session→order），需 --confirm。"""
     async def go():
         mcd, _ = await _make_mcd(_force_mode(ctx))
-        stores = await mcd.party_stores(city)
-        sel_store = store or stores[0].code
-        dates = await mcd.party_dates(sel_store)
+        spu_id = await _resolve_party_spu(mcd, spu)
+        city_obj = await _resolve_party_city(mcd, spu_id, city)
+        stores = await mcd.party_stores(spu_id, city_obj)
+        if not stores:
+            raise RuntimeError(f"{city_obj.name} 暂无可参与主题活动的门店，换个城市试试。")
+        sel_store = stores[0]
+        if store:
+            sel_store = next((s for s in stores if store in (s.code, s.name)), stores[0])
+        dates = await mcd.party_dates(spu_id, sel_store.code)
+        if not dates:
+            raise RuntimeError(f"{sel_store.name} 暂无可预约日期，换个门店试试。")
         sel_date = date or dates[0]
-        sessions = await mcd.party_sessions(sel_store, sel_date)
-        sel_session = session or sessions[0].label
-        preview = ui.Text(f"{city} · {sel_store} · {sel_date} {sel_session} · {people}人")
+        sessions = await mcd.party_sessions(spu_id, sel_store.code, sel_date)
+        if not sessions:
+            raise RuntimeError(f"{sel_date} 在该门店没有可预约场次，换一天试试。")
+        sel_session = next((s for s in sessions if session in (s.label, str(s.id))), sessions[0])
+        preview = ui.Text(f"{city_obj.name} · {sel_store.name} · {sel_date} {sel_session.label} "
+                          f"· {people}人 · 人均 ¥{sel_session.price:.2f}")
         order = None
         if _require_confirm(ctx, confirm, "预约主题活动", preview):
-            order = await mcd.party_book(city, sel_store, sel_date, sel_session, people)
-        return {"city": city, "store": sel_store, "date": sel_date, "session": sel_session,
-                "people": people, "options": {"stores": [s.name for s in stores], "dates": dates,
-                                              "sessions": [s.label for s in sessions]},
+            order = await mcd.party_book(spu_id=spu_id, city_code=city_obj.code,
+                                         store_code=sel_store.code, date_str=sel_date,
+                                         session=sel_session, people=people)
+        return {"spuId": spu_id, "city": city_obj.name, "cityCode": city_obj.code,
+                "store": sel_store.code, "storeName": sel_store.name, "date": sel_date,
+                "session": sel_session.label, "people": people, "per_person": sel_session.price,
+                "options": {"stores": [s.name for s in stores], "dates": dates,
+                            "sessions": [s.label for s in sessions]},
                 "order": order}
     res = _run(go())
     if ctx.obj.json_out:
         ui.print_json(res)
+        return
+    ui.info(f"SPU {res['spuId']} · {res['city']} 可选门店：{'、'.join(res['options']['stores'])}")
+    ui.info(f"{res['storeName']} 可选日期：{'、'.join(res['options']['dates'])}")
+    ui.info(f"{res['date']} 可选场次：{'、'.join(res['options']['sessions'])}")
+    if res["order"]:
+        ui.info(f"✅ {res['order'].get('status')}：{res['order'].get('party_order_id')}")
     else:
-        ui.info(f"{res['city']}可选门店：{'、'.join(res['options']['stores'])}")
-        ui.info(f"{res['store']}可选日期：{'、'.join(res['options']['dates'])}")
-        ui.info(f"{res['date']}可选场次：{'、'.join(res['options']['sessions'])}")
-        if res["order"]:
-            ui.info(f"✅ {res['order'].get('status')}：{res['order'].get('party_order_id')}")
-        else:
-            ui.warn("演练模式：追加 --confirm 才会真正预约。")
+        ui.warn("演练模式：追加 --confirm 才会真正预约。")
 
 
 @party_app.command("plan")
 def party_plan(
     ctx: typer.Context,
-    city: str = typer.Option("上海", "--city", help="城市（query-party-city）"),
+    city: str = typer.Option("上海", "--city", help="城市名或城市 code（query-party-city）"),
+    spu: Optional[int] = typer.Option(None, "--spu", help="主题活动 SPU（缺省取在售第一个）"),
     people: int = typer.Option(6, "--people", help="参与人数"),
     budget: Optional[float] = typer.Option(None, "--budget", help="总预算（元），如 600"),
     date_hint: Optional[str] = typer.Option(None, "--date-hint", help="期望日期 yyyy-MM-dd，如 2026-10-25"),
     weekend: Optional[bool] = typer.Option(None, "--weekend/--anyday", help="仅周末 / 不限"),
     max_distance: Optional[float] = typer.Option(None, "--max-distance", help="门店距离上限（公里）"),
+    days: int = typer.Option(14, "--days", help="只扫描未来 N 天的可约日期（真实模式可减少网络往返）"),
+    max_stores: int = typer.Option(8, "--max-stores", help="只扫描最近的 N 家门店（真实模式下门店可能上百家）"),
     confirm: bool = typer.Option(False, "--confirm"),
 ):
-    """麦麦派对策划师：按 人数/预算/日期 自动求解最优场次（city→store→date→session 全链路）。"""
+    """麦麦派对策划师：按 人数/预算/日期 自动求解最优场次（spu→city→store→date→session 全链路）。"""
     async def go():
         mcd, _ = await _make_mcd(_force_mode(ctx))
-        stores = await mcd.party_stores(city)
+        spu_id = await _resolve_party_spu(mcd, spu)
+        city_obj = await _resolve_party_city(mcd, spu_id, city)
+        stores = await mcd.party_stores(spu_id, city_obj)
+        if not stores:
+            return {"spuId": spu_id, "city": city_obj.name, "people": people, "budget": budget,
+                    "date_hint": date_hint, "max_distance_km": max_distance,
+                    "want_weekend": weekend, "plans": [], "order": None}
+        total_stores = len(stores)
+        if max_stores > 0:
+            stores = stores[:max_stores]     # service 已按距离升序，优先近店
+        today = date.today()
+        horizon = (today + timedelta(days=max(days, 1))).isoformat()
         # 并发拉取各门店可约日期，避免逐店串行往返（live 模式下每次都是网络调用）
-        date_lists = await asyncio.gather(*[mcd.party_dates(st.code) for st in stores])
-        dates_by_store = {st.code: ds for st, ds in zip(stores, date_lists)}
+        date_lists = await asyncio.gather(*[mcd.party_dates(spu_id, st.code) for st in stores])
+        dates_by_store = {
+            st.code: [d for d in ds if d <= horizon]
+            for st, ds in zip(stores, date_lists)
+        }
         # 再并发拉取每个 (门店, 日期) 下的场次
         session_keys = [(st.code, d) for st in stores
                         for d in dates_by_store.get(st.code, [])]
         session_lists = await asyncio.gather(*[
-            mcd.party_sessions(code, d) for code, d in session_keys
+            mcd.party_sessions(spu_id, code, d) for code, d in session_keys
         ])
         sessions_by_store_date = dict(zip(session_keys, session_lists))
         constraints = PartyConstraints(people=people, budget=budget,
@@ -749,19 +817,24 @@ def party_plan(
         order = None
         if plans:
             best = plans[0]
-            preview = ui.Text(f"{city} · {best.store.name} · {best.date} {best.session.label} · {people}人 · 总价 ¥{best.total_price:.2f}")
+            preview = ui.Text(f"{city_obj.name} · {best.store.name} · {best.date} {best.session.label} "
+                              f"· {people}人 · 总价 ¥{best.total_price:.2f}")
             if _require_confirm(ctx, confirm, "预约最优派对方案", preview):
-                order = await mcd.party_book(city, best.store.code, best.date,
-                                             best.session.label, people)
-        return {"city": city, "people": people, "budget": budget, "date_hint": date_hint,
-                "max_distance_km": max_distance, "want_weekend": weekend,
+                order = await mcd.party_book(spu_id=spu_id, city_code=city_obj.code,
+                                             store_code=best.store.code, date_str=best.date,
+                                             session=best.session, people=people)
+        return {"spuId": spu_id, "city": city_obj.name, "people": people, "budget": budget,
+                "date_hint": date_hint, "max_distance_km": max_distance, "want_weekend": weekend,
+                "stores_total": total_stores, "stores_scanned": len(stores),
                 "plans": [p.to_dict() for p in plans], "order": order}
     res = _run(go())
     if ctx.obj.json_out:
         ui.print_json(res)
         return
     if not res["plans"]:
-        ui.warn("没有满足约束的派对场次：请放宽 人数/预算/日期/距离 后重试。")
+        ui.warn(f"没有满足约束的派对场次（{res.get('city', '')} 扫描了 "
+                f"{res.get('stores_scanned', 0)}/{res.get('stores_total', 0)} 家门店）："
+                f"请放宽 人数/预算/日期/距离，或用 --max-stores 扩大门店范围、--days 扩大日期范围。")
         return
     ui.console.print(ui.table_party_plans(res["plans"], res["city"], res["people"]))
     if res["order"]:
